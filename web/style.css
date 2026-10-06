@@ -11,4 +11,3 @@
 
 footer{justify-content:center;align-items:center;flex-direction:column;text-align:center;gap:10px}.footer-brand{justify-content:center}
 
-.demo-video{margin-bottom:24px}.demo-video video{display:block;width:100%;height:auto;max-height:75vh;background:#0b0d10;border-radius:8px}.demo-video .panel-heading{gap:16px;flex-wrap:wrap}

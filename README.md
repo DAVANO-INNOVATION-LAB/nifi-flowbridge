@@ -38,11 +38,11 @@ Choose **Try tested native NiFi migration**, then **Assess full flow** and expor
 
 Cutover requires stopping NiFi listing, draining its queues, stopping its remaining processors, and reconciling destination bytes and metadata. Incoming files can continue accumulating in source storage. Explicitly approve backfill for objects that arrived during the handover, then start the generated worker. This does not transfer NiFi internal state or guarantee zero processing downtime. Historical versions, arbitrary transformations and custom storage policies are blocked.
 
-The silent video in the UI presents recorded integration evidence. The native example and complete evidence are available from the UI; this is a bounded native NiFi-to-worker migration, separate from the other target draft packages below.
+The repository’s silent demo video presents recorded integration evidence. The native example and complete evidence are available from the UI; this is a bounded native NiFi-to-worker migration, separate from the other target draft packages below.
 
 ## Three-stream media ETL demonstration
 
-The local UI includes a silent [migration evidence replay](web/demo.mp4) for the native NiFi handover described above. The separate media blueprint below demonstrates additional draft target packages.
+The repository includes a silent [migration evidence replay](web/demo.mp4) for the native NiFi handover described above. The separate media blueprint below demonstrates additional draft target packages.
 
 Choose **Try three-stream media ETL** in the UI. It loads three source buckets (images, text, video), separate destination buckets, Kafka reference-event topics and processing endpoints. The recorded evidence panel shows successful copies, retry recovery, deduplication, and deliberate terminal failures from isolated S3Mock/Kafka fixtures. No cloud account is required for the demonstration.
 
