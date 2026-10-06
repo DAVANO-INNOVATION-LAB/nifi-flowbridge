@@ -39,6 +39,6 @@ class MediaAPITests(unittest.TestCase):
   self.assertEqual(result['blueprint'],self.blueprint())
  def test_corrupt_package_is_rejected(self):self.assertEqual(self.request('/api/import-package',b'not a zip','application/zip')[0],400)
  def test_brand_and_recorded_demo_evidence_are_served(self):
-  self.assertEqual(self.request('/brand.svg')[0],200)
+  self.assertEqual(self.request('/brand.png')[0],200)
   html=self.request('/')[2].decode();self.assertIn('Devano Innovation Lab',html);self.assertNotIn('Built to make migrations understandable.',html)
   evidence=json.loads(self.request('/api/demo/media/evidence')[2]);self.assertFalse(evidence['current_production_status']);self.assertEqual(evidence['proof']['result'],'passed')

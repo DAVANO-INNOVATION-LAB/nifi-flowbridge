@@ -74,7 +74,7 @@ class Handler(BaseHTTPRequestHandler):
             return self.send(200, json.loads((ROOT / "examples" / "nifi-http-airflow.json").read_text()))
         if path == "/api/example":
             return self.send(200, {"schema": "flowbridge/v1", "name": "order-events", "source": {"type": "kafka", "brokers": "localhost:9092", "topic": "orders-in", "group": "flowbridge-orders", "offset": "earliest"}, "sink": {"type": "kafka", "brokers": "localhost:9092", "topic": "orders-out"}})
-        files = {"/brand.svg": ("brand.svg", "image/svg+xml"), "/": ("index.html", "text/html; charset=utf-8"), "/index.html": ("index.html", "text/html; charset=utf-8"), "/style.css": ("style.css", "text/css"), "/app.js": ("app.js", "text/javascript"), "/ui.js": ("ui.js", "text/javascript")}
+        files = {"/brand.png": ("brand.png", "image/png"), "/": ("index.html", "text/html; charset=utf-8"), "/index.html": ("index.html", "text/html; charset=utf-8"), "/style.css": ("style.css", "text/css"), "/app.js": ("app.js", "text/javascript"), "/ui.js": ("ui.js", "text/javascript")}
         if path not in files:
             return self.send(404, {"error": "Not found"})
         name, mime = files[path]

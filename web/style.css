@@ -5,6 +5,6 @@
 
 .table-scroll{overflow-x:auto}table{width:100%;border-collapse:collapse;text-align:left}th,td{padding:12px;border-bottom:1px solid #ddd;font-size:13px;overflow-wrap:anywhere}#graph-assessment{margin-top:24px}
 
-.brand-logo{width:36px;height:36px;display:inline-block;vertical-align:middle}.footer-brand{display:flex;align-items:center;gap:12px}footer .brand-logo{width:30px;height:30px}
+.brand-logo{width:48px;height:48px;object-fit:contain;display:inline-block;vertical-align:middle}.footer-brand{display:flex;align-items:center;gap:12px}footer .brand-logo{width:40px;height:40px}
 
 .media-lanes{display:grid;gap:10px;margin:18px 0}.media-lanes>div{padding:14px 18px;background:#f4f2ec;border-left:4px solid #ff6b24;border-radius:6px;font-weight:600}#media-demo{margin-bottom:24px}
