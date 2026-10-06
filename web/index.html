@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Flowbridge · Import. Understand. Export.</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <header class="masthead"><a class="brand" href="/" aria-label="Flowbridge home"><span class="brand-icon" aria-hidden="true">↗</span> Flowbridge</a><span class="organization">DAVANO INNOVATION LAB <span class="badge">OPEN SOURCE</span></span></header>
+  <main>
+    <section class="intro" aria-labelledby="headline"><p class="eyebrow">FLOW MIGRATION WORKSPACE</p><h1 id="headline">Your flow.<br>A new destination.</h1><p class="lede">Import a flow, understand what translates, and export a project for your next platform.</p><div class="platforms" aria-label="Supported platforms"><span>Apache NiFi</span><span aria-hidden="true">↔</span><span>SeaTunnel</span><span> Camel K</span><span>Kafka</span></div></section>
+    <div class="workspace">
+      <section class="panel input-panel" aria-labelledby="import-title"><div class="panel-heading"><div><p class="step">01 / SOURCE</p><h2 id="import-title">Bring your flow</h2></div><button class="text-button" id="example-button" type="button">Try an example ↗</button></div>
+        <label for="source">Import from</label><select id="source"><option value="auto">Detect format automatically</option><option value="nifi">Apache NiFi JSON</option><option value="seatunnel">SeaTunnel JSON configuration</option><option value="camel-k">Camel K JSON integration</option><option value="kafka">Flowbridge Kafka manifest</option><option value="flowbridge">Flowbridge JSON</option></select>
+        <div id="drop-zone" class="drop-zone"><span class="upload-icon" aria-hidden="true">↑</span><label for="file-input" class="file-label">Choose a JSON file <span>or drop it here</span></label><input id="file-input" type="file" accept=".json,application/json"><p id="file-detail">Up to 2 MB · processed on this local server</p></div>
+        <div class="editor-label"><label for="document">Or paste your document</label><button class="text-button" id="clear-button" type="button">Clear</button></div><textarea id="document" spellcheck="false" placeholder='Paste a supported JSON flow here…' aria-describedby="input-hint"></textarea><p class="hint" id="input-hint">JSON imports only. Kafka imports use a Flowbridge manifest, not Java source. Do not include passwords or API keys.</p>
+      </section>
+      <section class="panel output-panel" aria-labelledby="export-title"><div class="panel-heading"><div><p class="step">02 / DESTINATION</p><h2 id="export-title">Choose what’s next</h2></div><span class="direction" aria-hidden="true">↗</span></div>
+        <label for="target">Export to</label><select id="target"><option value="seatunnel">Apache SeaTunnel</option><option value="camel-k">Apache Camel K</option><option value="kafka">Kafka Streams project</option><option value="nifi">Apache NiFi</option><option value="flowbridge">Flowbridge JSON</option></select>
+        <p id="target-description" class="target-description"></p>
+        <div class="scope-note"><strong>Explicit about compatibility.</strong><p>This release translates a supported subset of flows. Unsupported processors, transformations, and routing must be resolved before export. Generated projects require review and testing in your environment.</p></div>
+        <div class="actions"><button id="analyze-button" class="button secondary" type="button">Check source</button><button id="convert-button" class="button primary" type="button">Prepare export <span aria-hidden="true">→</span></button></div>
+        <p id="status" class="status" role="status" aria-live="polite">Add a flow to begin.</p>
+        <section class="report" id="report" aria-labelledby="report-title" hidden><div class="report-heading"><h3 id="report-title">Compatibility report</h3><span id="report-summary" class="report-summary"></span></div><div id="report-findings"></div></section>
+      </section>
+    </div>
+    <section class="panel artifacts" id="artifacts" aria-labelledby="artifacts-title" hidden><div class="panel-heading"><div><p class="step">03 / ARTIFACTS</p><h2 id="artifacts-title">Ready for review</h2></div><button id="download-button" type="button" class="button primary" disabled>Download project ↓</button></div><p class="hint">Review generated configuration and replace environment placeholders before deployment.</p><label class="acknowledgement" for="review-ack"><input id="review-ack" type="checkbox"> <span>I have reviewed the compatibility findings. These are draft migration artifacts that need testing on the target platform.</span></label><div class="artifact-browser"><nav id="file-list" aria-label="Generated files"></nav><div class="file-preview"><div id="preview-name" class="preview-name"></div><pre><code id="preview-code"></code></pre></div></div></section>
+    <footer><span>Built to make migrations understandable.</span><span>No telemetry · No cloud model required</span></footer>
+  </main>
+</body>
+</html>

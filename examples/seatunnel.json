@@ -1,0 +1,25 @@
+{
+  "env": {
+    "job.mode": "STREAMING",
+    "job.name": "kafka-copy",
+    "parallelism": 1
+  },
+  "sink": {
+    "Kafka": {
+      "bootstrap.servers": "localhost:9092",
+      "format": "NATIVE",
+      "plugin_input": "events",
+      "topic": "events-out"
+    }
+  },
+  "source": {
+    "Kafka": {
+      "bootstrap.servers": "localhost:9092",
+      "consumer.group": "flowbridge-demo",
+      "format": "NATIVE",
+      "plugin_output": "events",
+      "start_mode": "earliest",
+      "topic": "events-in"
+    }
+  }
+}

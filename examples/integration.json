@@ -1,0 +1,35 @@
+{
+  "apiVersion": "camel.apache.org/v1",
+  "kind": "Integration",
+  "metadata": {
+    "name": "kafka-copy"
+  },
+  "spec": {
+    "flows": [
+      {
+        "from": {
+          "parameters": {
+            "autoOffsetReset": "earliest",
+            "brokers": "localhost:9092",
+            "groupId": "flowbridge-demo",
+            "keyDeserializer": "org.apache.kafka.common.serialization.ByteArrayDeserializer",
+            "valueDeserializer": "org.apache.kafka.common.serialization.ByteArrayDeserializer"
+          },
+          "steps": [
+            {
+              "to": {
+                "parameters": {
+                  "brokers": "localhost:9092",
+                  "keySerializer": "org.apache.kafka.common.serialization.ByteArraySerializer",
+                  "valueSerializer": "org.apache.kafka.common.serialization.ByteArraySerializer"
+                },
+                "uri": "kafka:events-out"
+              }
+            }
+          ],
+          "uri": "kafka:events-in"
+        }
+      }
+    ]
+  }
+}

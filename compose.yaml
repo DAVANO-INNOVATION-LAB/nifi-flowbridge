@@ -1,0 +1,17 @@
+services:
+  flowbridge:
+    build: .
+    ports:
+      - "127.0.0.1:8790:8790"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    pids_limit: 64
+    mem_limit: 256m
+    cpus: 1
+    restart: unless-stopped
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8790/api/health', timeout=2)"]
+      interval: 30s
+      timeout: 3s
+      retries: 3

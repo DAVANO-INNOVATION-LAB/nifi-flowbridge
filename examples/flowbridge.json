@@ -1,0 +1,16 @@
+{
+  "name": "kafka-copy",
+  "schema": "flowbridge/v1",
+  "sink": {
+    "brokers": "localhost:9092",
+    "topic": "events-out",
+    "type": "kafka"
+  },
+  "source": {
+    "brokers": "localhost:9092",
+    "group": "flowbridge-demo",
+    "offset": "earliest",
+    "topic": "events-in",
+    "type": "kafka"
+  }
+}

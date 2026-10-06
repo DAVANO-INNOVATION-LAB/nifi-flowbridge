@@ -1,0 +1,108 @@
+{
+  "externalControllerServices": {},
+  "flowContents": {
+    "componentType": "PROCESS_GROUP",
+    "connections": [
+      {
+        "backPressureDataSizeThreshold": "1 GB",
+        "backPressureObjectThreshold": 10000,
+        "componentType": "CONNECTION",
+        "destination": {
+          "groupId": "2f691ffb-7fd9-56a0-a271-6a0095500819",
+          "id": "d622856a-46bb-5865-8cfb-59f97e1a4cd1",
+          "type": "PROCESSOR"
+        },
+        "flowFileExpiration": "0 sec",
+        "groupIdentifier": "2f691ffb-7fd9-56a0-a271-6a0095500819",
+        "identifier": "9dfc1d61-a66f-5310-8412-8d71406b2d63",
+        "name": "success",
+        "prioritizers": [],
+        "selectedRelationships": [
+          "success"
+        ],
+        "source": {
+          "groupId": "2f691ffb-7fd9-56a0-a271-6a0095500819",
+          "id": "0fa2b88c-ffb4-5aad-b03c-01e856d45ac4",
+          "type": "PROCESSOR"
+        }
+      }
+    ],
+    "controllerServices": [],
+    "funnels": [],
+    "identifier": "2f691ffb-7fd9-56a0-a271-6a0095500819",
+    "inputPorts": [],
+    "name": "kafka-copy",
+    "outputPorts": [],
+    "position": {
+      "x": 0,
+      "y": 0
+    },
+    "processGroups": [],
+    "processors": [
+      {
+        "autoTerminatedRelationships": [],
+        "bundle": {
+          "artifact": "nifi-kafka-2-6-nar",
+          "group": "org.apache.nifi",
+          "version": "1.28.0"
+        },
+        "componentType": "PROCESSOR",
+        "concurrentlySchedulableTaskCount": 1,
+        "executionNode": "ALL",
+        "groupIdentifier": "2f691ffb-7fd9-56a0-a271-6a0095500819",
+        "identifier": "0fa2b88c-ffb4-5aad-b03c-01e856d45ac4",
+        "name": "Consume Kafka",
+        "penaltyDuration": "30 sec",
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "properties": {
+          "auto.offset.reset": "earliest",
+          "bootstrap.servers": "localhost:9092",
+          "group.id": "flowbridge-demo",
+          "topic": "events-in"
+        },
+        "runDurationMillis": 0,
+        "scheduledState": "STOPPED",
+        "schedulingPeriod": "0 sec",
+        "schedulingStrategy": "TIMER_DRIVEN",
+        "type": "org.apache.nifi.processors.kafka.pubsub.ConsumeKafka_2_6",
+        "yieldDuration": "1 sec"
+      },
+      {
+        "autoTerminatedRelationships": [],
+        "bundle": {
+          "artifact": "nifi-kafka-2-6-nar",
+          "group": "org.apache.nifi",
+          "version": "1.28.0"
+        },
+        "componentType": "PROCESSOR",
+        "concurrentlySchedulableTaskCount": 1,
+        "executionNode": "ALL",
+        "groupIdentifier": "2f691ffb-7fd9-56a0-a271-6a0095500819",
+        "identifier": "d622856a-46bb-5865-8cfb-59f97e1a4cd1",
+        "name": "Publish Kafka",
+        "penaltyDuration": "30 sec",
+        "position": {
+          "x": 0,
+          "y": 200
+        },
+        "properties": {
+          "bootstrap.servers": "localhost:9092",
+          "topic": "events-out"
+        },
+        "runDurationMillis": 0,
+        "scheduledState": "STOPPED",
+        "schedulingPeriod": "0 sec",
+        "schedulingStrategy": "TIMER_DRIVEN",
+        "type": "org.apache.nifi.processors.kafka.pubsub.PublishKafka_2_6",
+        "yieldDuration": "1 sec"
+      }
+    ],
+    "remoteProcessGroups": []
+  },
+  "flowEncodingVersion": "1.0",
+  "parameterContexts": {},
+  "parameterProviders": {}
+}

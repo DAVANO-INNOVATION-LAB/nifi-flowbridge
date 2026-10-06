@@ -1,0 +1,91 @@
+"""Loopback-only by default; no input execution or external service calls."""
+import json
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
+from urllib.parse import urlsplit
+
+from .io import MAX_BYTES, archive, read_document
+
+ROOT = Path(__file__).resolve().parent.parent
+
+
+class Handler(BaseHTTPRequestHandler):
+    server_version = "Flowbridge"
+
+    def log_message(self, *args):
+        pass  # Inputs, headers, and uploaded secrets must never reach access logs.
+
+    def send(self, status, body, content_type="application/json", attachment=False):
+        if isinstance(body, dict):
+            body = json.dumps(body).encode()
+        self.send_response(status)
+        self.send_header("Content-Type", content_type)
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; frame-ancestors 'none'; base-uri 'none'; form-action 'none'")
+        if attachment:
+            self.send_header("Content-Disposition", 'attachment; filename="flowbridge-export.zip"')
+        self.end_headers()
+        self.wfile.write(body)
+
+    def valid_origin(self):
+        # Host validation defeats DNS rebinding; browser origins must match exactly.
+        host = self.headers.get("Host", "")
+        allowed = {f"localhost:{self.server.server_port}", f"127.0.0.1:{self.server.server_port}"}
+        return host in allowed and self.headers.get("Origin", f"http://{host}") == f"http://{host}"
+
+    def do_GET(self):
+        if not self.valid_origin():
+            return self.send(403, {"error": "Local origin required"})
+        path = urlsplit(self.path).path
+        if path == "/api/health":
+            return self.send(200, {"status": "ok", "version": "0.1.0", "mode": "local"})
+        if path == "/api/example":
+            return self.send(200, {"schema": "flowbridge/v1", "name": "order-events", "source": {"type": "kafka", "brokers": "localhost:9092", "topic": "orders-in", "group": "flowbridge-orders", "offset": "earliest"}, "sink": {"type": "kafka", "brokers": "localhost:9092", "topic": "orders-out"}})
+        files = {"/": ("index.html", "text/html; charset=utf-8"), "/index.html": ("index.html", "text/html; charset=utf-8"), "/style.css": ("style.css", "text/css"), "/app.js": ("app.js", "text/javascript"), "/ui.js": ("ui.js", "text/javascript")}
+        if path not in files:
+            return self.send(404, {"error": "Not found"})
+        name, mime = files[path]
+        try:
+            return self.send(200, (ROOT / "web" / name).read_bytes(), mime)
+        except OSError:
+            return self.send(404, {"error": "Not found"})
+
+    def do_POST(self):
+        if not self.valid_origin():
+            return self.send(403, {"error": "Local origin required"})
+        if self.path not in ("/api/analyze", "/api/convert", "/api/download"):
+            return self.send(404, {"error": "Not found"})
+        if self.headers.get("Content-Type", "").split(";")[0] != "application/json":
+            return self.send(415, {"error": "Send application/json"})
+        try:
+            length = int(self.headers.get("Content-Length", "-1"))
+            if not 0 < length <= MAX_BYTES:
+                return self.send(413, {"error": "Request must be under 2 MiB"})
+            self.connection.settimeout(10)
+            payload = read_document(self.rfile.read(length))
+            document = payload.get("document")
+            if isinstance(document, str):
+                document = read_document(document.encode())
+            if not isinstance(document, dict):
+                raise ValueError("Document must be an object")
+            source = payload.get("source", "auto")
+            target = payload.get("target", "flowbridge")
+            formats = ("nifi", "seatunnel", "camel-k", "kafka", "flowbridge")
+            if not isinstance(source, str) or source not in ("auto",) + formats or not isinstance(target, str) or target not in formats:
+                raise ValueError("Unknown format")
+            from .service import analyze, convert
+            result = analyze(document, source) if self.path == "/api/analyze" else convert(document, source, target)
+            if self.path == "/api/download" and result["report"]["ok"]:
+                return self.send(200, archive(result["files"]), "application/zip", True)
+            return self.send(200 if result["report"]["ok"] else 422, result)
+        except (ValueError, OSError, RecursionError, TypeError):
+            return self.send(400, {"error": "Input could not be processed safely. Check the JSON and size limits."})
+
+
+def run(host="127.0.0.1", port=8790):
+    server = ThreadingHTTPServer((host, port), Handler)
+    server.daemon_threads = True
+    print(f"Flowbridge: http://127.0.0.1:{port}", flush=True)
+    server.serve_forever()

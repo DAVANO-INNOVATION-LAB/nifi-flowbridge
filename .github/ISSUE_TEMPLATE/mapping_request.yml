@@ -1,0 +1,29 @@
+name: Import or export mapping request
+description: Propose a specific flow capability with an example.
+title: "[Mapping] "
+body:
+  - type: input
+    id: direction
+    attributes:
+      label: Source and destination platform/version
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Processor or connector behavior to preserve
+      description: Include properties, relationships, data format and failure behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: example
+    attributes:
+      label: Minimal synthetic example and expected target behavior
+      description: Do not upload secrets, customer records or a production flow.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Official documentation and validation approach
+      description: Link primary documentation and describe how equivalence could be tested.
