@@ -1,0 +1,10 @@
+apiVersion: v2
+name: flowbridge
+description: Offline NiFi, SeaTunnel, Camel K and Kafka flow migration workbench
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+kubeVersion: ">=1.25.0-0"
+home: https://github.com/DAVANO-INNOVATION-LAB/nifi-flowbridge
+sources:
+  - https://github.com/DAVANO-INNOVATION-LAB/nifi-flowbridge

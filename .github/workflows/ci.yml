@@ -25,3 +25,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: docker build -t flowbridge:ci .
+  helm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: azure/setup-helm@v4
+        with:
+          version: v4.2.3
+      - run: python -m unittest discover -s tests -p test_deployment.py -v

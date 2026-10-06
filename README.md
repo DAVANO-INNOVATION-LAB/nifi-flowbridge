@@ -24,6 +24,18 @@ docker compose up --build -d
 
 The container runs without root, with a read-only filesystem, dropped capabilities, a 256 MiB memory limit, and a port bound to localhost. The application makes no external network calls. This is a single-user local tool; do not expose it publicly without an authentication and deployment design.
 
+## Kubernetes, OpenShift and Helm
+
+The included [Helm chart](charts/flowbridge) deploys the workbench with a private ClusterIP service, resource limits, health checks, no service-account token, and restricted container settings. It supports an OpenShift-assigned arbitrary UID without requiring the `anyuid` SCC. Optional TLS Ingress and OpenShift Route configurations are available.
+
+```sh
+helm upgrade --install flowbridge ./charts/flowbridge --namespace flowbridge --create-namespace \
+  --set image.repository=YOUR_ACCESSIBLE_REGISTRY/nifi-flowbridge --set image.tag=0.1.0
+kubectl -n flowbridge port-forward service/flowbridge-flowbridge 8790:8790
+```
+
+Use an image accessible to your cluster; see [deployment instructions](docs/deployment.md) for building/publishing, registry credentials, exact resource names, TLS and access control. Helm lint and rendered Kubernetes/OpenShift configuration tests pass. The image's HTTP export was tested with an arbitrary non-root UID, root group, read-only filesystem and all capabilities dropped. Actual Kubernetes/OpenShift cluster admission has not been verified. Helm deploys the **workbench**, not an automatically migrated data pipeline.
+
 ## Import and export
 
 | Format | Import | Export |

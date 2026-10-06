@@ -1,0 +1,62 @@
+{{- include "flowbridge.validate" . }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "flowbridge.fullname" . }}
+  labels:
+    {{- include "flowbridge.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "flowbridge.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "flowbridge.selectorLabels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "flowbridge.fullname" . }}
+      automountServiceAccountToken: false
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: flowbridge
+          image: {{ include "flowbridge.image" . | quote }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            {{- include "flowbridge.containerSecurityContext" . | nindent 12 }}
+          ports:
+            - name: http
+              containerPort: 8790
+              protocol: TCP
+          env:
+            - name: PYTHONDONTWRITEBYTECODE
+              value: "1"
+            - name: FLOWBRIDGE_ALLOWED_HOSTS
+              value: {{ include "flowbridge.allowedHosts" . | quote }}
+            - name: FLOWBRIDGE_ALLOWED_ORIGINS
+              value: {{ include "flowbridge.allowedOrigins" . | quote }}
+          startupProbe:
+            exec:
+              command: ["python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8790/api/health', timeout=2).read()"]
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 12
+          readinessProbe:
+            exec:
+              command: ["python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8790/api/health', timeout=2).read()"]
+            periodSeconds: 10
+            timeoutSeconds: 3
+          livenessProbe:
+            exec:
+              command: ["python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8790/api/health', timeout=2).read()"]
+            periodSeconds: 30
+            timeoutSeconds: 3
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}

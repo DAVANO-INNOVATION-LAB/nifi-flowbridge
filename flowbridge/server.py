@@ -1,5 +1,6 @@
 """Loopback-only by default; no input execution or external service calls."""
 import json
+import os
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -33,7 +34,10 @@ class Handler(BaseHTTPRequestHandler):
         # Host validation defeats DNS rebinding; browser origins must match exactly.
         host = self.headers.get("Host", "")
         allowed = {f"localhost:{self.server.server_port}", f"127.0.0.1:{self.server.server_port}"}
-        return host in allowed and self.headers.get("Origin", f"http://{host}") == f"http://{host}"
+        allowed.update(value.strip() for value in os.environ.get("FLOWBRIDGE_ALLOWED_HOSTS", "").split(",") if value.strip())
+        origins = {f"http://{host}", f"https://{host}"}
+        origins.update(value.strip() for value in os.environ.get("FLOWBRIDGE_ALLOWED_ORIGINS", "").split(",") if value.strip())
+        return host in allowed and self.headers.get("Origin", f"http://{host}") in origins
 
     def do_GET(self):
         if not self.valid_origin():

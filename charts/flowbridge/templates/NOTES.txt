@@ -1,0 +1,16 @@
+Flowbridge is installed as a stateless migration workbench.
+{{ if .Values.route.enabled }}
+HTTPS URL: https://{{ .Values.route.host }}
+{{ else if .Values.ingress.enabled }}
+HTTPS URL: https://{{ .Values.ingress.host }}
+{{ else }}
+Local access:
+  kubectl --namespace {{ .Release.Namespace }} port-forward service/{{ include "flowbridge.fullname" . }} 8790:8790
+Then open http://localhost:8790.
+{{ end }}
+Run the in-cluster health test:
+  helm test {{ .Release.Name }} --namespace {{ .Release.Namespace }}
+
+The application has no built-in authentication. Keep it private or put an
+organization-controlled authentication gateway before any public exposure.
+Generated migration artifacts require target-runtime review before deployment.

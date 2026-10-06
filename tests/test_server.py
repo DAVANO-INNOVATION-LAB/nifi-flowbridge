@@ -2,6 +2,7 @@ import http.client
 import json
 import threading
 import unittest
+from unittest.mock import patch
 from http.server import ThreadingHTTPServer
 from flowbridge.server import Handler
 
@@ -30,6 +31,13 @@ class ServerTests(unittest.TestCase):
     def test_rebinding_and_cross_origin_blocked(self):
         self.assertEqual(self.request("GET", "/api/health", headers={"Host": "attacker.invalid"})[0], 403)
         self.assertEqual(self.request("GET", "/api/health", headers={"Origin": "https://attacker.invalid"})[0], 403)
+
+    def test_explicit_cluster_host_and_tls_origin(self):
+        with patch.dict("os.environ", {"FLOWBRIDGE_ALLOWED_HOSTS": "flowbridge.example.test,flowbridge:8790", "FLOWBRIDGE_ALLOWED_ORIGINS": "https://flowbridge.example.test"}):
+            self.assertEqual(self.request("GET", "/api/health", headers={"Host": "flowbridge.example.test", "Origin": "https://flowbridge.example.test"})[0], 200)
+            self.assertEqual(self.request("GET", "/api/health", headers={"Host": "flowbridge:8790"})[0], 200)
+            self.assertEqual(self.request("GET", "/api/health", headers={"Host": "flowbridge.example.test", "Origin": "https://attacker.invalid"})[0], 403)
+            self.assertEqual(self.request("GET", "/api/health", headers={"Host": "unconfigured.example.test"})[0], 403)
 
     def test_example_converts_to_all_targets(self):
         status, body, _ = self.request("GET", "/api/example")
