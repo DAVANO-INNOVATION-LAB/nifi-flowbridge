@@ -3,8 +3,7 @@ services:
   workbench:
     image: flowbridge-workbench:airgap
     pull_policy: never
-    ports:
-      - "127.0.0.1:8791:8790"
+    # No host port: some Docker runtimes cannot forward an internal-network port.
     read_only: true
     cap_drop: [ALL]
     security_opt: [no-new-privileges:true]

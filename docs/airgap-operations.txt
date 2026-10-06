@@ -20,7 +20,15 @@ On the offline host:
   docker compose -f deployment/compose.airgap.yaml config
   docker compose -f deployment/compose.airgap.yaml up -d --wait
 
-Open http://127.0.0.1:8791/ on that host. The offline compose file uses preloaded images with pull_policy: never and no build step. It creates an internal network and does not modify the normal localhost:8790 deployment. Missing images must fail, not silently pull. Docker Engine/Compose must already be installed offline.
+This compose profile is an isolated headless workbench: no host port is published. Verify its local API with:
+  docker compose -f deployment/compose.airgap.yaml exec -T workbench python -c 'import urllib.request; print(urllib.request.urlopen("http://127.0.0.1:8790/api/health").read().decode())'
+It uses preloaded images with pull_policy: never and no build step, creates an internal network and does not modify the normal localhost:8790 deployment. Missing images must fail, not silently pull. Docker Engine/Compose must already be installed offline.
+
+For a browser UI on an already isolated host, transfer this repository and use an installed Python 3.11+ runtime:
+  python -m flowbridge serve --host 127.0.0.1 --port 8791
+Open http://127.0.0.1:8791/ locally. Offline assessment/export needs only the Python standard library; media workers use the preloaded dependency image. The host's physical disconnection or firewall remains the network boundary. Do not enable connected-mode endpoints unless their private routes and credentials are approved.
+
+Portability result on this machine: the internal-network Docker workbench passed its health check from inside the container, but host port forwarding was unavailable. The profile therefore deliberately publishes no port. Do not assume an internal Docker network alone supplies a host-accessible browser UI.
 
 Media workers
 Preinstall requirements using Dockerfile.media while connected. Do not run pip on the offline host. Mount an approved blueprint read-only and a writable persistent ledger directory owned by the worker UID 65532. Run the media worker with --blueprint /config/media-etl.json --pipeline image --state /data/image.db --watch; run equivalent workers for text/video. Keep ledgers separate. Attach workers only to a network that can reach approved private endpoints. A Docker internal network cannot generally reach private services outside that network; adapt topology and host egress rules deliberately.
