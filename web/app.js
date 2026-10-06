@@ -360,22 +360,6 @@ $('media-example-button').addEventListener('click', async () => {
     $('target-description').textContent='Generate the three-lane NiFi integration template. Review configuration and semantic gaps before attempting a native import.';
     $('batch-contract-label').hidden=true; $('partial-ack').checked=false;
     $('file-detail').textContent='Synthetic image, text and video ETL blueprint'; invalidate();
-    $('media-demo').hidden=false;
-    const proofResponse = await fetch('/api/demo/media/evidence');
-    if (!proofResponse.ok) throw new Error('The recorded demo evidence is unavailable.');
-    const evidence = await proofResponse.json();
-    $('media-proof-summary').textContent = `Recorded ${evidence.recorded_at}: ${evidence.proof.complete} completed jobs, ${evidence.proof.dead_letter} dead-letter records, ${evidence.proof.kafka_events_read_back} Kafka events verified.`;
-    for (const [id,values] of [['media-success',evidence.success_cases],['media-failures',evidence.failure_cases]]) { const list=$(id);list.replaceChildren();for (const value of values || []) {const item=document.createElement('li');item.textContent=value;list.append(item);} }
-    const nativeResponse = await fetch('/api/demo/media/native-import');
-    const native = nativeResponse.ok ? await nativeResponse.json() : null;
-    if (native?.native_import_executed) $('media-proof-summary').textContent += ` Native NiFi ${native.nifi_version}: ${native.processors.length} processors and ${native.connections} connections imported; ETL was not started.`;
-    const targetResponse = await fetch('/api/demo/media/target-imports');
-    const targets = targetResponse.ok ? await targetResponse.json() : null;
-    if (targets?.camel?.status === 'passed') $('media-proof-summary').textContent += ' Camel: three routes loaded without starting them. SeaTunnel: syntax checked only; runtime import remains unverified.';
-    const offlineResponse = await fetch('/api/demo/airgap/evidence');
-    const offline = offlineResponse.ok ? await offlineResponse.json() : null;
-    if (offline?.result === 'passed') $('media-proof-summary').textContent += ' Separate offline test: two storage endpoints, four completed jobs, one retained failure, six Kafka events; public TCP probes blocked. Physical air-gap certification is outside this test.';
-    $('media-evidence').textContent=JSON.stringify({reference_execution:evidence,native_import:native,target_imports:targets,offline_test:offline},null,2);
     status('Media blueprint loaded. Choose a target and review its mapping coverage. Partial targets require the incomplete-package acknowledgement.');
   } catch (error) { status(error.message,true); }
   finally {setBusy(false);}
@@ -396,15 +380,3 @@ $('continuous-example-button').addEventListener('click', async () => {
   } catch (error) { status(error.message, true); }
   finally { setBusy(false); }
 });
-
-(async () => {
-  try {
-    const response = await fetch('/api/demo/continuous/evidence');
-    if (!response.ok) throw new Error('Evidence unavailable');
-    const evidence = await response.json();
-    $('continuous-proof-data').textContent = JSON.stringify(evidence, null, 2);
-    $('continuous-proof-summary').textContent = evidence.result === 'passed' ? `Recorded run: ${evidence.native_completed_at_drain} files processed by NiFi + ${evidence.target_processed} by the generated worker. ${evidence.total_destination_objects} destination files verified; ${evidence.missing_objects} missing. Arrivals continued during handover. This verifies the tested three-lane metadata-classification mapping, not arbitrary transformations or every target platform.` : 'This recorded run did not pass. Review the evidence before making a migration claim.';
-  } catch {
-    $('continuous-proof-summary').textContent = 'Recorded evidence is unavailable in this deployment. No completed migration is claimed here.';
-  }
-})();

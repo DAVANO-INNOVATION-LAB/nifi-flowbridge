@@ -11,3 +11,5 @@
 
 footer{justify-content:center;align-items:center;flex-direction:column;text-align:center;gap:10px}.footer-brand{justify-content:center}
 
+
+.workspace-heading{margin:0 0 20px}.workspace-heading h1{font-size:26px;letter-spacing:-.5px;margin:0}.sample-flows{margin:12px 0 18px}.sample-flows summary,.target-support summary{cursor:pointer;font-weight:600}.target-support{margin:24px 0}.target-support table{width:100%;border-collapse:collapse;text-align:left;font-size:12px}.target-support th,.target-support td{padding:12px;border-bottom:1px solid var(--line);vertical-align:top}.table-scroll{overflow-x:auto}
