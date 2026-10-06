@@ -14,8 +14,8 @@ const descriptions = {
 let preparedRequest = null;
 let busy = false;
 function status(message, error = false) { $('status').textContent = message; $('status').classList.toggle('error', error); }
-function setBusy(value) { busy = value; for (const id of ['analyze-button', 'convert-button', 'example-button', 'http-example-button', 'media-example-button', 'continuous-example-button', 'clear-button']) $(id).disabled = value; $('download-button').disabled = value || !$('review-ack').checked || !preparedRequest; $('review-ack').disabled = value; $('source').disabled = value; $('target').disabled = value; $('document').readOnly = value; $('file-input').disabled = value; platformControls(); }
-function invalidate() { preparedRequest = null; $('review-ack').checked = false; $('download-button').disabled = true; $('artifacts').hidden = true; $('report').hidden = true; $('graph-assessment').hidden = true; status($('document').value.trim() ? 'Flow added. Check the source or prepare an export.' : 'Add a flow to begin.'); }
+function setBusy(value) { busy = value; for (const id of ['analyze-button', 'convert-button', 'example-button', 'http-example-button', 'media-example-button', 'continuous-example-button', 'clear-button', 'nifi-version', 'partial-ack', 'batch-contract']) $(id).disabled = value; $('download-button').disabled = value || !$('review-ack').checked || !preparedRequest; $('review-ack').disabled = value; $('source').disabled = value; $('target').disabled = value; $('document').readOnly = value; $('file-input').disabled = value; platformControls(); }
+function invalidate() { preparedRequest = null; $('review-ack').checked = false; $('download-button').disabled = true; $('artifacts').hidden = true; $('report').hidden = true; $('graph-assessment').hidden = true; $('cutover-guide').hidden = true; status($('document').value.trim() ? 'Flow added. Check the source or prepare an export.' : 'Add a flow to begin.'); }
 function requestBody() {
   const raw = $('document').value.trim();
   if (!raw) throw new Error('Add a JSON flow document first.');
@@ -25,8 +25,15 @@ function requestBody() {
   return { source: $('source').value, target: $('target').value, document, nifi_version: $('nifi-version').value, allow_partial: $('partial-ack').checked, batch_contract: $('batch-contract').checked ? {mode:'one_shot',acknowledge_scheduling_change:true} : null };
 }
 async function jsonRequest(path, body) {
-  const response = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-  const data = await response.json().catch(() => null);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30000);
+  let response, data;
+  try {
+    response = await fetch(path, { method: 'POST', signal: controller.signal, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    data = await response.json().catch(() => null);
+  } catch (error) {
+    throw new Error(error.name === 'AbortError' ? 'The assessment or export timed out. Your source is unchanged; retry when the local server responds.' : 'Cannot reach the local server. Your flow remains in the editor.');
+  } finally { clearTimeout(timeout); }
   if (!response.ok && body.allow_partial && data?.files && Object.keys(data.files).length) return data;
   if (!response.ok) { if (data?.report) showReport(data.report, path.endsWith('/analyze') ? 'source' : 'export'); throw new Error(errorMessage(data?.error) || (data?.report?.errors?.length ? 'Resolve the compatibility blockers shown below.' : `The request failed (${response.status}).`)); }
   if (!data) throw new Error('The local server returned an unreadable response.');
@@ -66,7 +73,7 @@ async function run(mode) {
     if (data.assessment) showGraph(data);
     const errors = showReport(data.report || data, mode === 'analyze' ? 'source' : 'export');
     if (errors) { if (body.allow_partial && showFiles(data.files)) { preparedRequest = body; status('Incomplete review package prepared. Blockers remain; this is not a successful migration.', true); } else status('Resolve the compatibility blockers before exporting.', true); return; }
-    if (mode === 'convert') { if (!showFiles(data.files)) throw new Error('No project files were generated. Review the report.'); preparedRequest = body; status('Export prepared. Review the findings and generated files below.'); }
+    if (mode === 'convert') { if (!showFiles(data.files)) throw new Error('No project files were generated. Review the report.'); preparedRequest = body; $('cutover-guide').hidden = !data.migration_plan; status(data.migration_plan ? 'Worker package prepared. No migration has started. Follow the handover steps below before running it.' : 'Export prepared. Review the findings and generated files below.'); }
     else status('Assessment complete. Review the inventory, then prepare an export to check executable mapping coverage.');
   } catch (error) { status(error.message || 'The request could not be completed.', true); }
   finally { setBusy(false); }

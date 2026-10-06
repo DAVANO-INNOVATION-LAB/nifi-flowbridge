@@ -9,8 +9,8 @@ Optional --docker-config PATH --context NAME select your Docker environment.
 The runner refuses existing test containers, creates a private temporary password,
 starts only its dedicated project, writes local-output/continuous-rerun/, and
 cleans up the test containers/network on exit. Never use production endpoints.
-The host orchestration wrapper was syntax-checked; its underlying build, setup,
-and smoke commands were executed successfully for the committed evidence.
+The full orchestration wrapper was executed successfully during robustness
+validation, including build, setup, smoke, reconciliation and cleanup.
 
 The real source is Apache NiFi 2.12.0 with three nested lanes (image, text, video):
 ListS3 -> FetchS3Object -> UpdateAttribute -> PutS3Object.

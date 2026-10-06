@@ -164,7 +164,7 @@ def analyze_nifi_s3(document):
 def export_nifi_s3(document):
     result=analyze_nifi_s3(document);result['files']={}
     if result['report']['ok']:
-        result['files']={'continuous-s3-profile.json':json.dumps(result['profile'],indent=2)+'\n','flowbridge/nifi_s3.py':Path(__file__).read_text(),'flowbridge/__init__.py':'','requirements.txt':(Path(__file__).parent.parent/'requirements-media.txt').read_text(),'LICENSE':(Path(__file__).parent.parent/'LICENSE').read_text(),'README.md':'# Bounded continuous S3 migration\n\nStop and drain NiFi; snapshot/back up its state. Run `python -m flowbridge.nifi_s3 --profile continuous-s3-profile.json --state /persistent/continuous.db --source-stopped --accept-backfill --watch` only after approving latest-object backfill. Omit --accept-backfill to require every source object already equals its destination. Keep the SQLite ledger on persistent storage. Credentials use the SDK provider chain. Object keys and bytes are preserved; metadata media_type is literal. At-least-once, not exactly-once. Stop target before any rollback; NiFi state is not translated. Never run both owners simultaneously.\n'}
+        result['files']={'continuous-s3-profile.json':json.dumps(result['profile'],indent=2)+'\n','flowbridge/nifi_s3.py':Path(__file__).read_text(),'flowbridge/__init__.py':'','requirements.txt':(Path(__file__).parent.parent/'requirements-media.txt').read_text(),'LICENSE':(Path(__file__).parent.parent/'LICENSE').read_text(),'README.md':'# Bounded continuous S3 migration\n\nStop and drain NiFi; snapshot/back up its state. Run `python -m flowbridge.nifi_s3 --profile continuous-s3-profile.json --state /persistent/continuous.db --source-stopped --accept-backfill --watch` only after approving latest-object backfill. Omit --accept-backfill to require every source object already equals its destination. Keep the SQLite ledger on persistent storage. Credentials use the SDK provider chain. Object keys and bytes are preserved; metadata media_type is literal. At-least-once, not exactly-once. Stop target before any rollback; NiFi state is not translated. Never run both owners simultaneously.\n\nEach poll is bounded to 10,000 listed objects per lane and 64 MiB per object. A listing_bound_exceeded or object_too_large failure requires reducing the scope or object size; it is not a completed migration. Other failed objects retry on later polls, and one failed object does not block its neighbors. A one-shot invocation exits nonzero when any transfer fails. Reconciliation checks ContentType as well as bytes and media_type; a failed recheck disables readiness until reconciliation succeeds again.\n'}
     return result
 
 
@@ -215,19 +215,22 @@ class ContinuousS3Runner:
         try:
             with db:yield db
         finally:db.close()
-    def _objects(self,lane):
-        client=self.clients[(lane['id'],'source')];token=None;count=0
+    def _keys(self,lane):
+        client=self.clients[(lane['id'],'source')];token=None;count=0;seen=set()
         while True:
             args={'Bucket':lane['source']['bucket'],'Prefix':lane['source']['prefix'],'MaxKeys':1000}
             if token:args['ContinuationToken']=token
             page=client.list_objects_v2(**args)
             for obj in page.get('Contents',[]):
                 count+=1;need(count<=10000,'listing_bound_exceeded');key=obj['Key']
-                head=client.head_object(Bucket=lane['source']['bucket'],Key=key)
-                need(isinstance(head.get('ETag'),str),'missing_object_identity')
-                yield key,head
+                yield key
             if not page.get('IsTruncated'):break
-            token=page.get('NextContinuationToken');need(token,'invalid_listing_page')
+            token=page.get('NextContinuationToken');need(isinstance(token,str) and token and token not in seen,'invalid_listing_page');seen.add(token)
+    def _objects(self,lane):
+        for key in self._keys(lane):
+            head=self.clients[(lane['id'],'source')].head_object(Bucket=lane['source']['bucket'],Key=key)
+            need(isinstance(head.get('ETag'),str),'missing_object_identity')
+            yield key,head
     def _read(self,client,bucket,key,head=None):
         args={'Bucket':bucket,'Key':key}
         if head:
@@ -253,20 +256,24 @@ class ContinuousS3Runner:
             except Exception:raise MigrationError('cutover_reconciliation_failed') from None
     def _establish_cutover(self,confirmed_source_stopped=False,backfill_existing=False):
         need(confirmed_source_stopped,'source_stop_confirmation_required');verified=0;pending=0
+        # A failed revalidation must never leave an old ready flag or stale adoption.
+        with self.db() as db:db.execute('UPDATE config SET ready=0')
         for lane in self.profile['lanes']:
             for key,head in self._objects(lane):
-                content,_=self._read(self.clients[(lane['id'],'source')],lane['source']['bucket'],key,head)
+                content,content_type=self._read(self.clients[(lane['id'],'source')],lane['source']['bucket'],key,head)
                 try:
                     target=self.clients[(lane['id'],'destination')]
                     target_head=target.head_object(Bucket=lane['destination']['bucket'],Key=key)
-                    destination,_=self._read(target,lane['destination']['bucket'],key,target_head)
+                    destination,target_type=self._read(target,lane['destination']['bucket'],key,target_head)
                 except Exception:
-                    need(backfill_existing,'destination_missing_or_unreadable');pending+=1;continue
-                if content!=destination or target_head.get('Metadata',{}).get('media_type')!=lane['media_type']:
-                    need(backfill_existing,'destination_bytes_or_metadata_differ');pending+=1;continue
+                    need(backfill_existing,'destination_missing_or_unreadable');self._forget(lane,key);pending+=1;continue
+                if content!=destination or content_type!=target_type or target_head.get('Metadata',{}).get('media_type')!=lane['media_type']:
+                    need(backfill_existing,'destination_bytes_or_metadata_differ');self._forget(lane,key);pending+=1;continue
                 self._checkpoint(lane,key,head,content);verified+=1
         with self.db() as db:db.execute('UPDATE config SET ready=1')
         return {'verified_existing':verified,'pending_backfill':pending,'source_state_imported':False}
+    def _forget(self,lane,key):
+        with self.db() as db:db.execute('DELETE FROM copied WHERE lane=? AND key=?',(lane['id'],key))
     def _checkpoint(self,lane,key,head,content):
         identity=json.dumps([head.get('VersionId'),head['ETag']])
         with self.db() as db:db.execute('INSERT OR REPLACE INTO copied VALUES(?,?,?,?)',(lane['id'],key,identity,hashlib.sha256(content).hexdigest()))
@@ -277,15 +284,17 @@ class ContinuousS3Runner:
         processed=[];failures=[]
         for lane in self.profile['lanes']:
             try:
-                for key,head in self._objects(lane):
-                    with self.db() as db:row=db.execute('SELECT identity FROM copied WHERE lane=? AND key=?',(lane['id'],key)).fetchone()
-                    if row and row[0]==json.dumps([head.get('VersionId'),head['ETag']]):continue
+                for key in self._keys(lane):
                     try:
+                        head=self.clients[(lane['id'],'source')].head_object(Bucket=lane['source']['bucket'],Key=key)
+                        need(isinstance(head.get('ETag'),str),'missing_object_identity')
+                        with self.db() as db:row=db.execute('SELECT identity FROM copied WHERE lane=? AND key=?',(lane['id'],key)).fetchone()
+                        if row and row[0]==json.dumps([head.get('VersionId'),head['ETag']]):continue
                         content,content_type=self._read(self.clients[(lane['id'],'source')],lane['source']['bucket'],key,head)
                         self.clients[(lane['id'],'destination')].put_object(Bucket=lane['destination']['bucket'],Key=key,Body=content,ContentType=content_type,Metadata={'media_type':lane['media_type']})
                         self._checkpoint(lane,key,head,content);processed.append({'lane':lane['id'],'key':key,'sha256':hashlib.sha256(content).hexdigest(),'bytes':len(content)})
-                    except Exception:failures.append({'lane':lane['id'],'code':'object_transfer_failed'})
-            except Exception:failures.append({'lane':lane['id'],'code':'source_scan_failed'})
+                    except Exception as exc:failures.append({'lane':lane['id'],'object_id':hashlib.sha256(key.encode()).hexdigest()[:16],'code':str(exc) if isinstance(exc,MigrationError) else 'object_transfer_failed'})
+            except Exception as exc:failures.append({'lane':lane['id'],'code':str(exc) if isinstance(exc,MigrationError) else 'source_scan_failed'})
         return {'counts':{'processed':len(processed),'failures':len(failures)},'processed':processed,'failures':failures,'delivery':'at_least_once'}
 
 
@@ -299,7 +308,8 @@ def main():
     if args.source_stopped:print(json.dumps(runner.establish_cutover(True,args.accept_backfill)),flush=True)
     while True:
         result=runner.run_once();print(json.dumps(result),flush=True)
-        if not args.watch:break
+        if not args.watch:
+            raise SystemExit(1 if result['counts']['failures'] else 0)
         time.sleep(args.poll_seconds)
 
 if __name__=='__main__':main()

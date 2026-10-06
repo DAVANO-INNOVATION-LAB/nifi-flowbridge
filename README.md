@@ -28,6 +28,10 @@ The container runs without root, with a read-only filesystem, dropped capabiliti
 
 The workbench uses local assets and needs no cloud account or CDN. Preload the application and media-worker images before disconnecting; the offline deployment refuses image pulls. See [offline operating instructions](docs/airgap-operations.txt) for image transfer, private endpoints, CA trust, persistence and scope limits. Isolated integration evidence is recorded separately from physical air-gap assurance.
 
+## Robustness validation
+
+The bounded S3 worker passed a 3,303-object / 44.5 MB synthetic stress run, full hash and metadata reconciliation, restart checks and destination-connection failure recovery. A separate local API test served 480 mixed requests from 16 concurrent clients with no unexpected errors. The full native NiFi handover was rerun after recovery fixes; 234 regression tests passed. See [measured evidence and limits](docs/robustness-evidence.json) and [reproduction instructions](tests/integration/stress/README.txt). These are local synthetic results, not a production throughput or universal migration guarantee.
+
 ## Continuous native NiFi migration demonstration
 
 Choose **Try tested native NiFi migration**, then **Assess full flow** and export to **Continuous S3 worker**. This accepts a native NiFi 2.12 export with three lanes, each containing `ListS3 → FetchS3Object → UpdateAttribute → PutS3Object`. The application emits an executable polling worker and a persistent SQLite checkpoint ledger. Processing in this profile means a literal image/text/video classification stored as S3 metadata; content and keys are preserved.

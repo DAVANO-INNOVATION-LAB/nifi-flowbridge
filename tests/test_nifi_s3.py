@@ -114,3 +114,55 @@ class ContinuousRuntimeTests(unittest.TestCase):
  def test_different_profile_cannot_adopt_prior_ledger(self):
   self.runner();self.profile['lanes'][0]['destination']['bucket']='other-bucket'
   with self.assertRaisesRegex(MigrationError,'state_profile_mismatch'):self.runner()
+
+class RecoveryRegressionTests(unittest.TestCase):
+ setUp=ContinuousRuntimeTests.setUp
+ runner=ContinuousRuntimeTests.runner
+ seed=ContinuousRuntimeTests.seed
+ def test_rebaseline_missing_destination_invalidates_old_checkpoint(self):
+  runner=self.runner();runner.establish_cutover(True);self.seed('gone',b'data');runner.run_once()
+  del self.target.objects[(self.lane['destination']['bucket'],'gone')]
+  with self.assertRaises(MigrationError):runner.establish_cutover(True)
+  with self.assertRaisesRegex(MigrationError,'cutover_not_established'):runner.run_once()
+  self.assertEqual(runner.establish_cutover(True,True)['pending_backfill'],1)
+  self.assertEqual(runner.run_once()['counts']['processed'],1)
+ def test_unreadable_object_does_not_starve_later_objects(self):
+  runner=self.runner();runner.establish_cutover(True);self.seed('bad',b'x');self.seed('good',b'y')
+  original=self.source.head_object
+  def head(Bucket,Key):
+   if Key=='bad':raise RuntimeError('private-secret')
+   return original(Bucket,Key)
+  self.source.head_object=head;result=runner.run_once()
+  self.assertEqual(result['counts'],{'processed':1,'failures':1});self.assertNotIn('private-secret',json.dumps(result))
+  self.source.head_object=original;self.assertEqual(runner.run_once()['counts']['processed'],1)
+ def test_repeating_pagination_token_terminates(self):
+  runner=self.runner();runner.establish_cutover(True)
+  self.source.list_objects_v2=lambda **kw:{'IsTruncated':True,'NextContinuationToken':'same','Contents':[]}
+  result=runner.run_once();self.assertEqual(result['counts']['failures'],3)
+  self.assertTrue(all(f['code']=='invalid_listing_page' for f in result['failures']))
+ def test_crash_after_write_before_checkpoint_replays_safely(self):
+  runner=self.runner();runner.establish_cutover(True);self.seed('crash',b'complete bytes')
+  runner._checkpoint=lambda *a:(_ for _ in ()).throw(RuntimeError('synthetic crash window'))
+  self.assertEqual(runner.run_once()['counts']['failures'],1)
+  restarted=self.runner();self.assertEqual(restarted.run_once()['counts']['processed'],1)
+  self.assertEqual(restarted.run_once()['counts']['processed'],0)
+  self.assertEqual(self.target.objects[(self.lane['destination']['bucket'],'crash')][0],b'complete bytes')
+ def test_oversized_object_is_reported_without_starving_valid_neighbor(self):
+  from unittest.mock import patch
+  runner=self.runner();runner.establish_cutover(True);self.seed('too-large',b'x'*9);self.seed('within-limit',b'x'*8)
+  with patch('flowbridge.nifi_s3.MAX_OBJECT',8):result=runner.run_once()
+  self.assertEqual(result['counts'],{'processed':1,'failures':1})
+  self.assertEqual(result['failures'][0]['code'],'object_too_large')
+ def test_changed_source_during_read_does_not_checkpoint_wrong_identity(self):
+  runner=self.runner();runner.establish_cutover(True);self.seed('changing',b'before')
+  original=self.source.get_object
+  def racing(**kw):
+   self.seed('changing',b'after');return original(**kw)
+  self.source.get_object=racing;self.assertEqual(runner.run_once()['counts']['failures'],1)
+  self.source.get_object=original;self.assertEqual(runner.run_once()['counts']['processed'],1)
+  self.assertEqual(self.target.objects[(self.lane['destination']['bucket'],'changing')][0],b'after')
+ def test_baseline_rejects_different_content_type(self):
+  runner=self.runner();self.seed('typed',b'x');self.target.put_object(Bucket=self.lane['destination']['bucket'],Key='typed',Body=b'x',Metadata={'media_type':'image'})
+  original=self.source.get_object
+  self.source.get_object=lambda **kw:{**original(**kw),'ContentType':'text/plain'}
+  with self.assertRaisesRegex(MigrationError,'metadata_differ'):runner.establish_cutover(True)

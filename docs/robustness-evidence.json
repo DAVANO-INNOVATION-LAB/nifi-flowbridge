@@ -1,0 +1,67 @@
+{
+  "recorded_at": "2026-10-06T22:44:29.730379+00:00",
+  "result": "passed",
+  "data_plane": {
+    "result": "passed",
+    "objects": 3303,
+    "bytes": 44507136,
+    "lanes": 3,
+    "objects_per_lane": 1101,
+    "baseline_seconds": 9.976,
+    "transfer_seconds": 15.768,
+    "objects_per_second": 209.47,
+    "all_hashes_and_metadata_matched": true,
+    "restart_reprocessed": 0,
+    "connection_refusal_failures": 1,
+    "recovered_objects": 1,
+    "max_rss_kib": 145200,
+    "scope": "Synthetic S3Mock, single polling worker; not production throughput certification"
+  },
+  "application_api": {
+    "result": "passed",
+    "requests": 480,
+    "concurrent_clients": 16,
+    "expected_rejections": 120,
+    "unexpected_errors": 0,
+    "elapsed_seconds": 1.991,
+    "requests_per_second": 241.09,
+    "p95_seconds": 0.133,
+    "max_seconds": 1.068,
+    "scope": "Ephemeral local HTTP server, mixed assessment/conversion/download/malformed flows"
+  },
+  "native_handover": {
+    "result": "passed",
+    "total_produced": 36,
+    "native_completed_at_drain": 6,
+    "target_processed": 30,
+    "missing_objects": 0,
+    "hashes_matched": true,
+    "processing_metadata_matched": true,
+    "content_types_matched": true,
+    "worker_restart_repeat_processed": 0,
+    "generated_module_executed": true
+  },
+  "regression_tests": 234,
+  "ui_contract": "passed",
+  "visual_browser_test": "not performed; browser access unavailable under current policy",
+  "worker_source_sha256": "f9d7328aded9f01216dd25b781323827100a8eeb839f09b7c024e5ba1552e3cf",
+  "fault_checks": [
+    "destination TCP refusal and recovery",
+    "write-before-checkpoint failure injection",
+    "source mutation during conditional read",
+    "failed rebaseline disables old ready state",
+    "old checkpoint removed when destination must be repaired",
+    "unreadable object does not starve lane",
+    "oversize object remains failed; valid neighbor completes",
+    "repeated pagination token terminates with visible failure",
+    "wrong ContentType prevents checkpoint adoption"
+  ],
+  "limits": [
+    "Local synthetic S3Mock test, not production cloud benchmarking",
+    "No long-duration soak or hardware power-loss test",
+    "At-least-once delivery; crash recovery can repeat writes",
+    "10000 listed objects per lane per poll; 64MiB maximum object size",
+    "DOM workflow tests do not prove visual accessibility or mobile usability"
+  ],
+  "fixture_cleanup": true
+}

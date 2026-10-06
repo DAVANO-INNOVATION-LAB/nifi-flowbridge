@@ -1,0 +1,10 @@
+**
+!flowbridge
+!flowbridge/**
+!examples
+!examples/nifi-continuous-media.json
+!tests
+!tests/integration
+!tests/integration/stress
+!tests/integration/stress/run.py
+**/__pycache__
