@@ -43,8 +43,25 @@ class Handler(BaseHTTPRequestHandler):
         if not self.valid_origin():
             return self.send(403, {"error": "Local origin required"})
         path = urlsplit(self.path).path
+        if path.startswith("/api/live/"):
+            from .live import api
+            if path == "/api/live/status":
+                return self.send(200, {"enabled": bool(api.token()), "authRequired": True})
+            if not api.authorized(self.headers.get("Authorization")):
+                return self.send(401, {"error": "Live mode requires its owner access token and enabled server configuration."})
+            if path == "/api/live/jobs":
+                try:
+                    return self.send(200, api.manager().list_jobs())
+                except OSError:
+                    return self.send(503, {"error": "Migration storage is unavailable."})
+            if path.startswith("/api/live/jobs/"):
+                try:
+                    return self.send(200, api.manager().status(path.rsplit("/", 1)[-1]))
+                except (ValueError, OSError):
+                    return self.send(404, {"error": "Migration unavailable."})
+            return self.send(404, {"error": "Not found"})
         if path == "/api/health":
-            return self.send(200, {"status": "ok", "version": "0.1.0", "mode": "local"})
+            return self.send(200, {"status": "ok", "version": "0.2.0", "mode": "local"})
         if path == "/api/example":
             return self.send(200, {"schema": "flowbridge/v1", "name": "order-events", "source": {"type": "kafka", "brokers": "localhost:9092", "topic": "orders-in", "group": "flowbridge-orders", "offset": "earliest"}, "sink": {"type": "kafka", "brokers": "localhost:9092", "topic": "orders-out"}})
         files = {"/": ("index.html", "text/html; charset=utf-8"), "/index.html": ("index.html", "text/html; charset=utf-8"), "/style.css": ("style.css", "text/css"), "/app.js": ("app.js", "text/javascript"), "/ui.js": ("ui.js", "text/javascript")}
@@ -59,8 +76,13 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         if not self.valid_origin():
             return self.send(403, {"error": "Local origin required"})
-        if self.path not in ("/api/analyze", "/api/convert", "/api/download"):
+        live = self.path.startswith("/api/live/")
+        if self.path not in ("/api/analyze", "/api/convert", "/api/download") and not live:
             return self.send(404, {"error": "Not found"})
+        if live:
+            from .live import api
+            if not api.authorized(self.headers.get("Authorization")):
+                return self.send(401, {"error": "Live mode requires its owner access token and enabled server configuration."})
         if self.headers.get("Content-Type", "").split(";")[0] != "application/json":
             return self.send(415, {"error": "Send application/json"})
         try:
@@ -69,6 +91,16 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send(413, {"error": "Request must be under 2 MiB"})
             self.connection.settimeout(10)
             payload = read_document(self.rfile.read(length))
+            if live:
+                try:
+                    return self.send(200, api.dispatch(self.path, payload))
+                except Exception as exc:
+                    from .live.jobs import MigrationError
+                    from .live.kafka import KafkaBridgeError
+                    from .live.platforms import PlatformError
+                    safe = isinstance(exc, (MigrationError, KafkaBridgeError, PlatformError))
+                    message = str(exc) if safe else "Connected operation failed. Check configuration and endpoint access; no completion is claimed."
+                    return self.send(422, {"error": message, "report": {"ok": False, "errors": [{"code": getattr(exc, "code", "migration_error") if safe else "migration_error", "message": message}], "warnings": []}})
             document = payload.get("document")
             if isinstance(document, str):
                 document = read_document(document.encode())

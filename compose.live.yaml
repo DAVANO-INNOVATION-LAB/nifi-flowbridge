@@ -1,0 +1,18 @@
+# Opt-in override: create the owner token first, then include both Compose files.
+services:
+  flowbridge:
+    environment:
+      FLOWBRIDGE_LIVE_ENABLED: "true"
+      FLOWBRIDGE_LIVE_TOKEN_FILE: /run/secrets/flowbridge-live-token
+      FLOWBRIDGE_DATA_DIR: /data
+    secrets:
+      - source: live-token
+        target: flowbridge-live-token
+    volumes:
+      - migration-data:/data
+    stop_grace_period: 30s
+secrets:
+  live-token:
+    file: ${FLOWBRIDGE_LIVE_TOKEN_SOURCE:-./.secrets/live-token}
+volumes:
+  migration-data:

@@ -3,7 +3,7 @@ nameOverride: ""
 fullnameOverride: ""
 image:
   repository: ghcr.io/davano-innovation-lab/nifi-flowbridge
-  tag: "0.1.0"
+  tag: "0.2.0"
   digest: ""
   pullPolicy: IfNotPresent
 imagePullSecrets: []
@@ -29,3 +29,10 @@ route:
   annotations: {}
 tests:
   enabled: true
+live:
+  enabled: false
+  tokenSecretName: ""
+  storage:
+    existingClaim: ""
+# Leave unset on OpenShift so admission can select an allowed group.
+podSecurityContext: {}

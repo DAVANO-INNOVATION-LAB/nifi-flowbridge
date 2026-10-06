@@ -1,8 +1,8 @@
 # Kubernetes and OpenShift deployment
 
-The Helm chart in `charts/flowbridge` deploys the stateless Flowbridge workbench. It does not deploy NiFi, SeaTunnel, Camel K, Kafka brokers or generated applications. File conversion remains subject to the [support matrix](support-matrix.md).
+The Helm chart in `charts/flowbridge` deploys the Flowbridge workbench, with optional connected Kafka migration. It does not deploy NiFi, SeaTunnel, Camel K, Kafka brokers or generated applications. File conversion remains subject to the [support matrix](support-matrix.md).
 
-The application has **no built-in user authentication**. The default deployment uses a ClusterIP Service and local port forwarding. ClusterIP limits network exposure; it does not authenticate other workloads in the cluster. Public or shared exposure requires your organization's authenticated gateway/proxy and network controls. Host/origin checks defend browser requests and are not a login system.
+The static UI and file converter have **no built-in user login**. Connected migration operations require an owner bearer token when enabled. The default deployment uses a ClusterIP Service and local port forwarding. ClusterIP limits network exposure; it does not authenticate other workloads in the cluster. Public or shared exposure requires your organization's authenticated gateway/proxy and network controls. Host/origin checks defend browser requests and are not a login system.
 
 ## Prerequisites and image
 
@@ -12,7 +12,7 @@ To build and push to a registry you control, replace the example registry/name b
 
 ```sh
 FLOWBRIDGE_IMAGE=registry.example.com/your-team/nifi-flowbridge
-FLOWBRIDGE_TAG=0.1.0
+FLOWBRIDGE_TAG=0.2.0
 # Match the cluster architecture; use a multi-platform build for mixed nodes.
 docker build -t "$FLOWBRIDGE_IMAGE:$FLOWBRIDGE_TAG" .
 docker push "$FLOWBRIDGE_IMAGE:$FLOWBRIDGE_TAG"
@@ -20,7 +20,7 @@ docker push "$FLOWBRIDGE_IMAGE:$FLOWBRIDGE_TAG"
 
 An image built on an ARM laptop is not automatically an AMD64 image. For both architectures, use an appropriately configured builder with `docker buildx build --platform linux/amd64,linux/arm64 --push`. Authenticate to your registry through its normal mechanism; do not put registry passwords in chart values or Git. Configure `imagePullSecrets` if the cluster needs an existing pull secret.
 
-If a release publishes a public GHCR image, use the exact repository/tag or digest recorded in that release's verified installation instructions. Until then, build/push your own image as above. Publication of source code, a chart archive and a container image are separate operations.
+The public image `ghcr.io/davano-innovation-lab/nifi-flowbridge:0.1.0` has been verified. It predates connected migration. For the 0.2.0 functionality described here, build/push this source as above, or use the exact 0.2.0 image/tag after its release publication has been verified. Publication of source code, a chart archive and a container image are separate operations.
 
 ## Install the local chart
 
@@ -48,11 +48,54 @@ kubectl -n flowbridge get events --sort-by=.lastTimestamp
 kubectl -n flowbridge logs deployment/flowbridge-flowbridge
 ```
 
-Check image pull access, architecture, resource quotas and admission-policy messages before changing security settings. `ImagePullBackOff` usually needs an accessible image or pull credentials, not an elevated container. An uploaded flow is processed in memory; the chart requires no persistent volume or production-platform credentials.
+Check image pull access, architecture, resource quotas and admission-policy messages before changing security settings. `ImagePullBackOff` usually needs an accessible image or pull credentials, not an elevated container. File-only uploads are processed in memory and require no persistent volume or platform credentials. Connected mode requires the existing Secret and PVC described below.
+
+## Opt-in connected migration storage and token
+
+Create an existing PVC and owner-token Secret in the release namespace before enabling live mode. The chart does not create either resource. For example, apply this PVC using a storage class supported by the cluster (set `storageClassName` if there is no suitable default):
+
+```yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: flowbridge-data
+  namespace: flowbridge
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 1Gi
+```
+
+Create a Secret from a protected local file containing a strong owner token, without embedding the token in Helm values:
+
+```sh
+kubectl -n flowbridge create secret generic flowbridge-live-owner \
+  --from-file=token=/secure/path/owner-token
+```
+
+Add these values to the reviewed installation:
+
+```yaml
+live:
+  enabled: true
+  tokenSecretName: flowbridge-live-owner
+  storage:
+    existingClaim: flowbridge-data
+replicaCount: 1
+```
+
+Live mode enforces one replica and the `Recreate` deployment strategy. The application reads the read-only Secret file at `/run/secrets/flowbridge-live-token` and persists its SQLite ledger in the PVC mounted at `/data`. It does not place the owner token in an environment variable. The container root filesystem remains read-only. Upgrades interrupt active transfers; after restart they are marked `interrupted` and do not automatically resume. Connection credentials must be provided again for any reviewed recovery operation.
+
+The provisioned volume must support write access for the Pod's assigned group. Kubernetes administrators can set `podSecurityContext.fsGroup` to an approved positive group ID when their storage driver needs it. Leave that option unset on OpenShift so admission can select a permitted namespace group. Do not add privileged ownership-changing containers or grant `anyuid` to work around storage permissions. The chart does not make a pre-existing volume writable by itself.
+
+The default Service stays private. TLS Ingress/Route settings can be combined with live mode, but the UI itself is accessible to any client that can reach it; live actions require the owner token. Keep the token behind the deployment's intended access controls. Follow the [record transfer and cutover procedure](live-migration.md), including manually stopping external producers/consumers and separately redirecting applications.
+
+For a local deployment without Kubernetes, use the [Compose live override and token setup](live-migration.md#enable-locally-with-docker-compose).
 
 ## OpenShift security posture
 
-The chart is designed to run under restricted security constraints: non-root, no privilege escalation, all Linux capabilities dropped, RuntimeDefault seccomp, and a read-only root filesystem. It does not pin `runAsUser` or `fsGroup`; OpenShift can assign namespace-appropriate IDs. The container must be able to read its application files under that arbitrary non-root UID without writing into its source directory. No `anyuid`, privileged SCC, host filesystem mount or cluster-administrator grant is required by the application design. [Red Hat image guidelines](https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html/images/creating-images).
+The chart is designed to run under restricted security constraints: non-root, no privilege escalation, all Linux capabilities dropped, RuntimeDefault seccomp, and a read-only root filesystem. By default it does not pin `runAsUser` or `fsGroup`; OpenShift can assign namespace-appropriate IDs. The container must be able to read its application files under that arbitrary non-root UID without writing into its source directory. No `anyuid`, privileged SCC, host filesystem mount or cluster-administrator grant is required by the application design. [Red Hat image guidelines](https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html/images/creating-images).
 
 These controls align with `restricted-v2`. Actual admission depends on cluster policy and version; newer documentation also describes `restricted-v3` and user-namespace constraints. Do not weaken SCCs to work around an uninvestigated failure. After a real OpenShift install, inspect the pod's `openshift.io/scc` annotation and effective security context to establish what admitted it. [OpenShift security context constraints](https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/observability/authentication_and_authorization/index).
 
@@ -91,7 +134,7 @@ helm template flowbridge charts/flowbridge \
 
 Helm's local rendering does not check whether a live cluster supports the APIs or whether admission controllers will accept the result. Supplying `--api-versions` simulates capability discovery; it does not install Route support on Kubernetes. [Helm template reference](https://helm.sh/docs/helm/helm_template/).
 
-Where a cluster is available, add a server-side dry run of the reviewed render, then perform an install and functional test. Successful linting, render tests, image build, arbitrary-UID container smoke tests and live-cluster verification are distinct evidence. Do not describe Kubernetes/OpenShift deployment as verified unless a real cluster has accepted and run the workload.
+Where a cluster is available, add a server-side dry run of the reviewed render, then perform an install and functional test. Successful linting, render tests, image build, arbitrary-UID container smoke tests and live-cluster verification are distinct evidence. Actual Kubernetes/OpenShift admission has not been tested for this release. Do not describe cluster deployment as verified unless a real cluster has accepted and run the workload.
 
 ## OCI Helm distribution
 
@@ -100,15 +143,15 @@ Maintainers can package and publish the chart to an OCI registry. Helm infers th
 ```sh
 helm package charts/flowbridge --destination /tmp
 # After registry authentication and authorization:
-helm push /tmp/flowbridge-0.1.0.tgz oci://ghcr.io/davano-innovation-lab/charts
+helm push /tmp/flowbridge-0.2.0.tgz oci://ghcr.io/davano-innovation-lab/charts
 ```
 
 Only after that version is published and pull-tested should users install it with:
 
 ```sh
-helm show chart oci://ghcr.io/davano-innovation-lab/charts/flowbridge --version 0.1.0
+helm show chart oci://ghcr.io/davano-innovation-lab/charts/flowbridge --version 0.2.0
 helm upgrade --install flowbridge \
-  oci://ghcr.io/davano-innovation-lab/charts/flowbridge --version 0.1.0 \
+  oci://ghcr.io/davano-innovation-lab/charts/flowbridge --version 0.2.0 \
   --namespace flowbridge --create-namespace \
   --set image.repository="$FLOWBRIDGE_IMAGE" \
   --set image.tag="$FLOWBRIDGE_TAG" --wait
@@ -126,4 +169,4 @@ helm uninstall flowbridge --namespace flowbridge
 
 Resource names use `<release>-flowbridge` by default; the examples install release `flowbridge`, producing `flowbridge-flowbridge`. A `fullnameOverride` changes those names.
 
-This removes the Helm-managed application resources. It does not delete the namespace, your image registry, generated downloads, or any independently deployed data platform.
+This interrupts any running live transfer and removes the Helm-managed application resources. The externally provisioned Secret and PVC are not chart-owned and remain; retain the ledger for recovery. Already copied Kafka records and applied target offsets are not undone. It does not delete the namespace, your image registry, generated downloads, or any independently deployed data platform.

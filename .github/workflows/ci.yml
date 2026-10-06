@@ -36,3 +36,17 @@ jobs:
         with:
           version: v4.2.3
       - run: python -m unittest discover -s tests -p test_deployment.py -v
+  live-kafka:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t flowbridge:ci .
+      - run: docker compose -p flowbridge-integration -f tests/integration/compose.yaml up -d --wait
+      - run: >-
+          docker run --rm -i --network flowbridge-integration_default
+          --user 1000780000:0 --read-only --tmpfs /tmp:rw,noexec,nosuid,size=64m
+          --cap-drop ALL --security-opt no-new-privileges:true --memory 384m --cpus 1
+          --entrypoint python flowbridge:ci - < tests/integration/kafka_smoke.py
+      - if: always()
+        run: docker compose -p flowbridge-integration -f tests/integration/compose.yaml down

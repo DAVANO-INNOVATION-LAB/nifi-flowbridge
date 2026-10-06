@@ -11,7 +11,7 @@ const descriptions = {
 let preparedRequest = null;
 let busy = false;
 function status(message, error = false) { $('status').textContent = message; $('status').classList.toggle('error', error); }
-function setBusy(value) { busy = value; for (const id of ['analyze-button', 'convert-button', 'example-button', 'clear-button']) $(id).disabled = value; $('download-button').disabled = value || !$('review-ack').checked || !preparedRequest; $('review-ack').disabled = value; $('source').disabled = value; $('target').disabled = value; $('document').readOnly = value; $('file-input').disabled = value; }
+function setBusy(value) { busy = value; for (const id of ['analyze-button', 'convert-button', 'example-button', 'clear-button']) $(id).disabled = value; $('download-button').disabled = value || !$('review-ack').checked || !preparedRequest; $('review-ack').disabled = value; $('source').disabled = value; $('target').disabled = value; $('document').readOnly = value; $('file-input').disabled = value; platformControls(); }
 function invalidate() { preparedRequest = null; $('review-ack').checked = false; $('download-button').disabled = true; $('artifacts').hidden = true; $('report').hidden = true; status($('document').value.trim() ? 'Flow added. Check the source or prepare an export.' : 'Add a flow to begin.'); }
 function requestBody() {
   const raw = $('document').value.trim();
@@ -96,3 +96,203 @@ for (const eventName of ['dragenter', 'dragover']) $('drop-zone').addEventListen
 for (const eventName of ['dragleave', 'drop']) $('drop-zone').addEventListener(eventName, event => { event.preventDefault(); $('drop-zone').classList.remove('dragging'); });
 $('drop-zone').addEventListener('drop', event => { if (event.dataTransfer.files.length !== 1) { status('Choose one JSON flow at a time.', true); return; } loadFile(event.dataTransfer.files[0]); });
 $('target-description').textContent = descriptions[$('target').value];
+
+// Connected operations are deliberately separate from file conversion.
+// Credentials remain in these form controls and server memory; never browser storage.
+let liveEnabled = false;
+let liveBusy = false;
+let livePlan = null;
+let liveJob = null;
+let liveState = '';
+let liveTimer = null;
+const liveTerminal = new Set(['completed', 'failed', 'cancelled', 'canceled', 'interrupted']);
+function liveStatus(message, error = false) { $('live-status').textContent = message; $('live-status').classList.toggle('error', error); }
+function liveControls() {
+  const active = liveJob && !liveTerminal.has(liveState);
+  $('live-assess').disabled = !liveEnabled || liveBusy || active;
+  $('live-start').disabled = !liveEnabled || liveBusy || !livePlan || !$('live-start-ack').checked || active;
+  $('live-refresh').disabled = liveBusy;
+  $('live-find').disabled = !liveEnabled || liveBusy;
+  $('live-cancel').disabled = liveBusy || !active;
+  $('live-cutover-button').disabled = liveBusy || !active || !['mirroring', 'ready'].includes(liveState) || !['live-producers-stopped', 'live-consumers-stopped', 'live-cutover-ack'].every(id => $(id).checked);
+  for (const control of $('live-form').querySelectorAll('input,select')) control.disabled = liveBusy || (!!active && control.id !== 'live-token');
+}
+function invalidateLivePlan() {
+  livePlan = null; $('live-assessment').hidden = true; $('live-start-ack').checked = false;
+  if (!liveJob || liveTerminal.has(liveState)) liveStatus(liveEnabled ? 'Enter connections and assess them before starting a transfer.' : 'Connected migration is not enabled on this server.');
+  liveControls();
+}
+function clearLiveSecrets() { for (const id of ['live-source-password', 'live-target-password']) $(id).value = ''; }
+function liveConnection(side) {
+  const prefix = `live-${side}-`;
+  const value = {brokers: $(prefix + 'brokers').value.trim(), topic: $(prefix + 'topic').value.trim(), security_protocol: $(prefix + 'security').value};
+  if (value.security_protocol === 'SASL_SSL') { value.username = $(prefix + 'username').value; value.password = $(prefix + 'password').value; value.sasl_mechanism = $(prefix + 'mechanism').value; }
+  return value;
+}
+async function liveRequest(path, payload) {
+  const token = $('live-token').value.trim();
+  if (!token) throw new Error('Enter the owner access token to use connected migration.');
+  const options = {method: payload === undefined ? 'GET' : 'POST', headers: {Authorization: `Bearer ${token}`}, cache: 'no-store'};
+  if (payload !== undefined) { options.headers['Content-Type'] = 'application/json'; options.body = JSON.stringify(payload); }
+  const response = await fetch(path, options);
+  const data = await response.json().catch(() => null);
+  if (!response.ok) { if (data?.report && !path.includes('/platform/')) showLiveReport(data.report); throw new Error(errorMessage(data?.error) || (response.status === 401 || response.status === 403 ? 'The owner token was not accepted.' : `Connected migration request failed (${response.status}).`)); }
+  if (!data) throw new Error('The server returned an unreadable response.');
+  return data;
+}
+function safeLiveSummary(value) {
+  if (Array.isArray(value)) return value.map(safeLiveSummary);
+  if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, /password|secret|token|credential|authorization/i.test(key) ? '[redacted]' : safeLiveSummary(item)]));
+  return value;
+}
+function showLiveReport(report = {}) {
+  $('live-assessment').hidden = false; $('live-summary').textContent = ''; const findings = $('live-findings'); findings.replaceChildren();
+  for (const kind of ['errors', 'warnings']) for (const item of Array.isArray(report[kind]) ? report[kind] : []) { const row = document.createElement('div'); row.className = `finding ${kind === 'errors' ? 'error' : 'warning'}`; row.textContent = findingText(item); findings.append(row); }
+}
+async function refreshLiveAvailability() {
+  try {
+    const response = await fetch('/api/live/status', {cache:'no-store'});
+    if (!response.ok) throw new Error('Connected migration is unavailable on this server.');
+    const data = await response.json(); liveEnabled = data.enabled === true;
+    $('live-availability').textContent = liveEnabled ? 'AVAILABLE · OWNER ACCESS' : 'DISABLED ON SERVER';
+    if (!liveJob) liveStatus(liveEnabled ? 'Enter connections and assess them before starting a transfer.' : 'Connected migration is disabled. Enable it on the server with an owner access token to use this workspace.');
+  } catch (error) { liveEnabled = false; $('live-availability').textContent = 'UNAVAILABLE'; if (!liveJob) liveStatus(error.message, true); }
+  liveControls(); platformControls();
+}
+function renderLiveJob(data) {
+  liveState = typeof data.state === 'string' ? data.state : 'unknown'; $('live-job').hidden = false; $('live-job-state').textContent = liveState.replaceAll('_', ' ');
+  $('live-copied').textContent = Number.isFinite(data.copied) ? data.copied.toLocaleString() : 'Not reported';
+  $('live-lag').textContent = Number.isFinite(data.lag) ? data.lag.toLocaleString() : 'Not reported';
+  $('live-ready').textContent = data.cutover_ready === true ? 'Ready for review' : data.cutover_ready === false ? 'Not ready' : 'Not reported';
+  $('live-job-error').hidden = !data.error; $('live-job-error').textContent = errorMessage(data.error) || (data.error ? 'The transfer reported an error.' : '');
+  $('live-job-result').hidden = !data.result;
+  $('live-job-result-json').textContent = data.result ? JSON.stringify(safeLiveSummary(data.result), null, 2) : '';
+  const events = $('live-events'); events.replaceChildren();
+  for (const event of (Array.isArray(data.events) ? data.events.slice(-12) : [])) { const item = document.createElement('li'); item.textContent = findingText(event); events.append(item); }
+  if (liveState === 'completed') liveStatus('The server reports cutover completed. Review the result before directing your applications to the destination.');
+  else if (liveTerminal.has(liveState)) liveStatus(`The server reports this transfer is ${liveState}. Records already copied remain at the destination.`, liveState === 'failed');
+  else liveStatus(`Server transfer state: ${liveState.replaceAll('_', ' ')}. Monitor progress here before requesting cutover.`);
+  liveControls();
+}
+function scheduleLivePoll() { clearTimeout(liveTimer); if (liveJob && !liveTerminal.has(liveState)) liveTimer = setTimeout(pollLiveJob, 3000); }
+async function pollLiveJob() {
+  if (!liveJob || liveTerminal.has(liveState)) return;
+  if (liveBusy) { scheduleLivePoll(); return; }
+  try { renderLiveJob(await liveRequest(`/api/live/jobs/${encodeURIComponent(liveJob)}`)); }
+  catch (error) { liveStatus(`Could not refresh progress: ${error.message} The transfer may still be running.`, true); }
+  scheduleLivePoll();
+}
+$('live-form').addEventListener('submit', async event => {
+  event.preventDefault(); if (liveBusy || !liveEnabled) return;
+  invalidateLivePlan(); liveBusy = true; liveControls(); liveStatus('Assessing source and destination connections…');
+  try {
+    const result = await liveRequest('/api/live/assess', {name: $('live-name').value.trim(), source: liveConnection('source'), target: liveConnection('target'), groups: $('live-groups').value.split(',').map(value => value.trim()).filter(Boolean)});
+    showLiveReport(result.report); $('live-summary').textContent = result.summary ? (typeof result.summary === 'string' ? result.summary : JSON.stringify(safeLiveSummary(result.summary), null, 2)) : '';
+    if (result.report?.ok === true && result.plan_id) { livePlan = result.plan_id; clearLiveSecrets(); liveStatus('Assessment complete. Review its findings and authorize the data transfer when ready.'); }
+    else liveStatus('Assessment did not approve a transfer. Resolve the reported blockers.', true);
+  } catch (error) { liveStatus(error.message, true); }
+  finally { liveBusy = false; liveControls(); }
+});
+$('live-start').addEventListener('click', async () => {
+  if (liveBusy || !livePlan || !$('live-start-ack').checked) return;
+  liveBusy = true; liveControls(); liveStatus('Requesting data transfer…');
+  try {
+    const result = await liveRequest('/api/live/start', {plan_id: livePlan, acknowledge: true});
+    if (!result.job_id) throw new Error('The server did not return a transfer identifier. Verify server status before retrying.');
+    liveJob = result.job_id; livePlan = null; $('live-start-ack').checked = false; clearLiveSecrets();
+    for (const id of ['live-producers-stopped', 'live-consumers-stopped', 'live-cutover-ack']) $(id).checked = false;
+    renderLiveJob(result); scheduleLivePoll();
+  } catch (error) { liveStatus(`${error.message} If the request was interrupted, verify server status before starting another transfer.`, true); }
+  finally { liveBusy = false; liveControls(); }
+});
+$('live-cancel').addEventListener('click', async () => {
+  if (liveBusy || !liveJob || liveTerminal.has(liveState)) return;
+  liveBusy = true; liveControls();
+  try { const result = await liveRequest('/api/live/cancel', {job_id: liveJob}); renderLiveJob(result); scheduleLivePoll(); }
+  catch (error) { liveStatus(`Cancellation was not confirmed: ${error.message}`, true); }
+  finally { liveBusy = false; liveControls(); }
+});
+$('live-cutover-button').addEventListener('click', async () => {
+  if ($('live-cutover-button').disabled || !liveJob) return;
+  liveBusy = true; liveControls(); liveStatus('Requesting final cutover checks. Keep producers and consumers stopped.');
+  try { const result = await liveRequest('/api/live/cutover', {job_id: liveJob, producers_stopped:true, consumers_stopped:true, acknowledge:true}); renderLiveJob(result); scheduleLivePoll(); }
+  catch (error) { liveStatus(`Cutover was not confirmed: ${error.message} Keep applications stopped while checking the transfer state.`, true); scheduleLivePoll(); }
+  finally { liveBusy = false; liveControls(); }
+});
+for (const id of ['live-start-ack', 'live-producers-stopped', 'live-consumers-stopped', 'live-cutover-ack']) $(id).addEventListener('change', liveControls);
+for (const control of $('live-form').querySelectorAll('input,select')) control.addEventListener('input', () => { if (control.id !== 'live-token') invalidateLivePlan(); });
+for (const side of ['source','target']) $(`live-${side}-security`).addEventListener('change', () => { $(`live-${side}-auth`).hidden = $(`live-${side}-security`).value !== 'SASL_SSL'; invalidateLivePlan(); });
+$('live-find').addEventListener('click', async () => {
+  if (liveBusy || !liveEnabled) return;
+  liveBusy = true; liveControls(); liveStatus('Finding existing transfers…');
+  try {
+    const response = await liveRequest('/api/live/jobs');
+    const jobs = Array.isArray(response.jobs) ? response.jobs : [];
+    // The server returns newest first; prefer an active job, then the latest finished job.
+    const job = jobs.find(item => item && !liveTerminal.has(item.state)) || jobs[0];
+    if (!job) { liveStatus('No existing transfers were found. No new transfer was started.'); return; }
+    const id = job.job_id || job.id;
+    if (typeof id !== 'string' || !id) throw new Error('The server did not return a valid transfer identifier.');
+    clearTimeout(liveTimer); liveJob = id; livePlan = null; $('live-assessment').hidden = true; $('live-start-ack').checked = false;
+    for (const control of ['live-producers-stopped', 'live-consumers-stopped', 'live-cutover-ack']) $(control).checked = false;
+    renderLiveJob(job); scheduleLivePoll();
+  } catch (error) { liveStatus(`Could not find existing transfers: ${error.message}`, true); }
+  finally { liveBusy = false; liveControls(); }
+});
+$('live-refresh').addEventListener('click', refreshLiveAvailability);
+window.addEventListener('pagehide', () => { clearTimeout(liveTimer); clearLiveSecrets(); $('live-token').value = ''; });
+refreshLiveAvailability();
+
+let platformBusy = false;
+function platformStatus(message, error = false) { $('platform-status').textContent = message; $('platform-status').classList.toggle('error', error); }
+function platformControls() {
+  $('platform-inspect').disabled = platformBusy || !liveEnabled;
+  $('platform-export').disabled = platformBusy || !liveEnabled || $('platform-kind').value === 'seatunnel' || busy;
+  for (const control of $('platform-form').querySelectorAll('input,select')) control.disabled = platformBusy;
+}
+function platformPayload() {
+  const raw = $('platform-url').value.trim(); let url;
+  try { url = new URL(raw); } catch { throw new Error('Enter a valid HTTPS API base URL.'); }
+  const allowLocal = $('platform-loopback').checked;
+  if (url.username || url.password || url.search || url.hash) throw new Error('Use an API URL without embedded credentials, query parameters, or fragments.');
+  if (url.protocol !== 'https:' && !(allowLocal && url.protocol === 'http:' && ['127.0.0.1', '[::1]'].includes(url.hostname))) throw new Error('HTTPS is required. For a local test, explicitly allow HTTP and use 127.0.0.1 or [::1].');
+  const platform = $('platform-kind').value;
+  const payload = {platform, url: raw, bearer_token: $('platform-bearer').value, allow_http_loopback: allowLocal};
+  if (platform === 'nifi') { payload.group_id = $('platform-group').value.trim(); if (!payload.group_id) throw new Error('Enter the NiFi process group ID.'); }
+  if (platform === 'camel-k') { payload.namespace = $('platform-namespace').value.trim(); payload.name = $('platform-integration').value.trim(); if (!payload.namespace || !payload.name) throw new Error('Enter the namespace and Camel K integration name.'); }
+  if (platform === 'seatunnel') { payload.job_id = $('platform-job').value.trim(); if (!payload.job_id) throw new Error('Enter the SeaTunnel job ID.'); }
+  return payload;
+}
+async function platformOperation(operation) {
+  if (platformBusy || !liveEnabled || (operation === 'export' && busy)) return;
+  if (operation === 'export' && $('platform-kind').value === 'seatunnel') { platformStatus('SeaTunnel flow export is not supported in this release. Status inspection is available.', true); return; }
+  $('platform-result').hidden = true;
+  try {
+    const payload = platformPayload(); platformBusy = true; platformControls(); platformStatus(operation === 'inspect' ? 'Inspecting the running resource…' : 'Fetching its flow definition…');
+    const result = await liveRequest(`/api/live/platform/${operation}`, payload);
+    $('platform-bearer').value = '';
+    if (operation === 'export') {
+      if (!result.document || typeof result.document !== 'object' || !['nifi', 'camel-k'].includes(result.source)) throw new Error('The platform did not return a supported flow definition.');
+      const document = JSON.stringify(result.document, null, 2);
+      if (new TextEncoder().encode(document).length > MAX_BYTES) throw new Error('The fetched flow exceeds the converter’s 2 MB limit.');
+      if (busy) throw new Error('The file converter is busy. Wait for its current request to finish, then fetch again.');
+      $('document').value = document; $('source').value = result.source; $('file-input').value = ''; $('file-detail').textContent = `Fetched from running ${result.source === 'nifi' ? 'NiFi' : 'Camel K'} · review before conversion`; invalidate();
+      platformStatus('Flow loaded into the converter above. Check compatibility before preparing any export. Nothing was deployed or started.');
+      status('A connected flow was imported. Check its source and destination compatibility before deployment.');
+    } else { $('platform-result').textContent = JSON.stringify(safeLiveSummary(result), null, 2); $('platform-result').hidden = false; platformStatus('Inspection complete. No platform workload was modified.'); }
+  } catch (error) { platformStatus(error.message || 'The platform request could not be completed.', true); }
+  finally { platformBusy = false; platformControls(); }
+}
+$('platform-form').addEventListener('submit', event => { event.preventDefault(); platformOperation('inspect'); });
+$('platform-export').addEventListener('click', () => platformOperation('export'));
+$('platform-url').addEventListener('input', () => { $('platform-bearer').value = ''; $('platform-result').hidden = true; });
+$('platform-kind').addEventListener('change', () => {
+  const kind = $('platform-kind').value;
+  for (const [key, id] of [['nifi', 'platform-nifi-fields'], ['camel-k', 'platform-camel-fields'], ['seatunnel', 'platform-seatunnel-fields']]) $(id).hidden = kind !== key;
+  $('platform-bearer').value = ''; $('platform-result').hidden = true;
+  $('platform-url-hint').textContent = {nifi:'Use the NiFi REST API base URL, including /nifi-api. Certificate verification stays enabled.', 'camel-k':'Use the Kubernetes API server base URL. The platform token needs read access to the named Camel K integration.', seatunnel:'Use the SeaTunnel REST API base URL. This release can inspect job state; flow export is not supported.'}[kind];
+  platformStatus(kind === 'seatunnel' ? 'SeaTunnel status inspection is available. Flow export is unsupported in this release.' : 'Enter the platform endpoint and resource to inspect or fetch.');
+  platformControls();
+});
+window.addEventListener('pagehide', () => { $('platform-bearer').value = ''; });
+platformControls();

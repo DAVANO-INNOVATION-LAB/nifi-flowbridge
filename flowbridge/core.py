@@ -180,7 +180,9 @@ def seatunnel(data):
 
 def camel(data):
     exact(data, ('apiVersion','kind','metadata','spec'), ('apiVersion','kind','metadata','spec'))
-    exact(data['metadata'], ('name',), ('name',))
+    exact(data['metadata'], ('name','namespace'), ('name',))
+    if 'namespace' in data['metadata'] and not re.fullmatch(r'[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?', str(data['metadata']['namespace'])):
+        fail('invalid_namespace', 'Camel K namespace must be a valid namespace name.')
     exact(data['spec'], ('flows',), ('flows',))
     if data['apiVersion'] != 'camel.apache.org/v1' or data['kind'] != 'Integration':
         fail('unsupported_camel', 'Only Camel K v1 Integration resources are supported.')
@@ -220,6 +222,8 @@ def analyze(data, source='auto'):
         flow = {'nifi':nifi,'seatunnel':seatunnel,'camel-k':camel,'kafka':lambda d:canonical(d,'flowbridge-kafka/v1'),'flowbridge':canonical}[source](data)
         report['ok'] = True
         report['warnings'] = [{'code':'migration_review','message':'Draft migration: review offsets, delivery guarantees, Kafka keys and headers, failure handling, provenance, security and runtime compatibility before deployment. Only byte payload routing is represented.'}]
+        if source == 'camel-k' and data.get('metadata', {}).get('namespace'):
+            report['warnings'].append({'code':'deployment_namespace','message':'The source namespace is deployment metadata and is not carried into the portable flow. Select the destination namespace explicitly.'})
         return {'report':report,'flow':flow}
     except Invalid as error:
         report['errors'].append({'code':error.code,'message':error.message})

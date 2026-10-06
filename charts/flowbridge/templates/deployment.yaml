@@ -7,6 +7,10 @@ metadata:
     {{- include "flowbridge.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}
+  {{- if .Values.live.enabled }}
+  strategy:
+    type: Recreate
+  {{- end }}
   selector:
     matchLabels:
       {{- include "flowbridge.selectorLabels" . | nindent 6 }}
@@ -22,9 +26,25 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       securityContext:
+        {{- with .Values.podSecurityContext.fsGroup }}
+        fsGroup: {{ . }}
+        {{- end }}
         runAsNonRoot: true
         seccompProfile:
           type: RuntimeDefault
+      {{- if .Values.live.enabled }}
+      volumes:
+        - name: live-token
+          secret:
+            secretName: {{ .Values.live.tokenSecretName | quote }}
+            defaultMode: 0444
+            items:
+              - key: token
+                path: flowbridge-live-token
+        - name: live-data
+          persistentVolumeClaim:
+            claimName: {{ .Values.live.storage.existingClaim | quote }}
+      {{- end }}
       containers:
         - name: flowbridge
           image: {{ include "flowbridge.image" . | quote }}
@@ -42,6 +62,20 @@ spec:
               value: {{ include "flowbridge.allowedHosts" . | quote }}
             - name: FLOWBRIDGE_ALLOWED_ORIGINS
               value: {{ include "flowbridge.allowedOrigins" . | quote }}
+          {{- if .Values.live.enabled }}
+            - name: FLOWBRIDGE_LIVE_ENABLED
+              value: "true"
+            - name: FLOWBRIDGE_LIVE_TOKEN_FILE
+              value: /run/secrets/flowbridge-live-token
+            - name: FLOWBRIDGE_DATA_DIR
+              value: /data
+          volumeMounts:
+            - name: live-token
+              mountPath: /run/secrets
+              readOnly: true
+            - name: live-data
+              mountPath: /data
+          {{- end }}
           startupProbe:
             exec:
               command: ["python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8790/api/health', timeout=2).read()"]

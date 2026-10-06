@@ -69,3 +69,11 @@ Credentials are not a portability feature. Do not include secrets in generated a
 Every supported mapping needs an input fixture, expected normalized model, generated output, reverse-import test and unsupported-property tests. Test malformed graphs and hostile inputs as well as the happy path. Target-native parsing, compilation and live record-transfer tests add separate evidence; document which were actually run for a release. Do not infer runtime compatibility from a JSON round-trip test.
 
 Before production use, test representative records and failure conditions in a non-production target: binary payloads, empty/null values, keys, headers, ordering, restarts, replay, duplicate handling and transaction behavior. A release must publish its actual test results and supported target versions.
+
+## Connected migration architecture (0.2)
+
+The authenticated `/api/live/` routes are a separate control boundary. A file-provisioned owner token gates endpoint inspection and job operations. A preflight plan is held in memory for 15 minutes; starting it requires acknowledgement. Endpoint credentials stay in memory. One active job per application instance copies Kafka records with acknowledged deliveries before persisting source-to-target offset mappings in SQLite. The UI polls progress and lists durable job history.
+
+The coordinator mirrors new records until an owner confirms that external producers and consumers have stopped. It checks quiescence, source retention, target continuity and inactive consumer groups before translating and applying target offsets. It never changes source offsets or redirects external applications. Offset updates across groups are not atomic. Restarted active jobs become interrupted; automatic resume is deliberately unavailable.
+
+The data-plane adapter is independently tested with real Kafka brokers, including a complete authenticated HTTP migration. Control-plane NiFi/Camel K/SeaTunnel adapters are read-only in the UI and do not grant universal migration support. See [live migration](live-migration.md) for the supported subset and recovery limits.

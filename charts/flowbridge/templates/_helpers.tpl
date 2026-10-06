@@ -60,6 +60,14 @@ seccompProfile:
   type: RuntimeDefault
 {{- end -}}
 {{- define "flowbridge.validate" -}}
+{{- if .Values.live.enabled -}}
+{{- if ne (int .Values.replicaCount) 1 -}}
+{{- fail "Live migration requires replicaCount=1." -}}
+{{- end -}}
+{{- if or (empty .Values.live.tokenSecretName) (empty .Values.live.storage.existingClaim) -}}
+{{- fail "Live migration requires an existing token Secret and persistent volume claim." -}}
+{{- end -}}
+{{- end -}}
 {{- if and .Values.ingress.enabled .Values.route.enabled -}}
 {{- fail "Enable either ingress or route, not both." -}}
 {{- end -}}

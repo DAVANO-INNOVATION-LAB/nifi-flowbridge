@@ -67,6 +67,46 @@ class DeploymentTests(unittest.TestCase):
         self.assertRegex(service, r"type:\s*ClusterIP")
         self.assertNotRegex(manifest, r"(?m)^kind:\s*(?:Ingress|Route)\s*$")
         self.assertNotIn("nodePort:", service)
+        self.assertNotIn("FLOWBRIDGE_LIVE_ENABLED", manifest)
+        self.assertNotIn("persistentVolumeClaim:", manifest)
+        self.assertNotIn("FLOWBRIDGE_LIVE_TOKEN", manifest)
+
+    def test_live_mode_mounts_existing_secret_and_storage_without_exposing_token(self):
+        manifest = self.render(
+            "--set", "live.enabled=true", "--set", "live.tokenSecretName=owner-secret",
+            "--set", "live.storage.existingClaim=migration-state",
+        )
+        deployment = self.resource(manifest, "Deployment")
+        self.assertRegex(deployment, r"replicas:\s*1")
+        self.assertRegex(deployment, r"strategy:\s*\n\s*type:\s*Recreate")
+        self.assertRegex(deployment, r'secretName:\s*"owner-secret"')
+        self.assertRegex(deployment, r'claimName:\s*"migration-state"')
+        self.assertIn("key: token", deployment)
+        self.assertIn("mountPath: /run/secrets", deployment)
+        self.assertIn("readOnly: true", deployment)
+        self.assertIn("mountPath: /data", deployment)
+        self.assertRegex(deployment, r'FLOWBRIDGE_LIVE_ENABLED\s*\n\s*value:\s*"true"')
+        self.assertIn("FLOWBRIDGE_LIVE_TOKEN_FILE", deployment)
+        self.assertIn("/run/secrets/flowbridge-live-token", deployment)
+        self.assertIn("FLOWBRIDGE_DATA_DIR", deployment)
+        self.assertNotRegex(deployment, r"name:\s*FLOWBRIDGE_LIVE_TOKEN\s*$")
+        self.assertNotIn("secretKeyRef:", deployment)
+        self.assertNotRegex(manifest, r"(?m)^kind:\s*(?:Secret|PersistentVolumeClaim)\s*$")
+        self.assertNotIn("fsGroup:", deployment)
+        self.assertNotIn("live-token", self.resource(manifest, "Pod"))
+
+    def test_live_mode_requires_secret_claim_and_single_replica(self):
+        valid = ("--set", "live.enabled=true", "--set", "live.tokenSecretName=owner-secret", "--set", "live.storage.existingClaim=migration-state")
+        for override in ("live.tokenSecretName=", "live.storage.existingClaim=", "replicaCount=2"):
+            with self.subTest(override=override):
+                self.render(*valid, "--set", override, succeeds=False)
+
+    def test_optional_storage_group_is_explicit_and_nonroot(self):
+        manifest = self.render("--set", "podSecurityContext.fsGroup=65532")
+        self.assertRegex(self.resource(manifest, "Deployment"), r"fsGroup:\s*65532")
+        self.assertNotIn("runAsUser:", manifest)
+        self.assertNotIn("runAsGroup:", manifest)
+        self.render("--set", "podSecurityContext.fsGroup=0", succeeds=False)
 
     def test_openshift_route_uses_tls_and_explicit_origin(self):
         manifest = self.render(

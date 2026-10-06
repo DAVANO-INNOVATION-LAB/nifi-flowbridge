@@ -7,3 +7,8 @@ target/
 .env
 *.log
 local-output/
+.secrets/
+.flowbridge-state/
+*.db
+*.db-wal
+*.db-shm

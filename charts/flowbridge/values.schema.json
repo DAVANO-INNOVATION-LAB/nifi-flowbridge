@@ -214,6 +214,50 @@
       "required": [
         "enabled"
       ]
+    },
+    "live": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "tokenSecretName": {
+          "type": "string",
+          "maxLength": 253,
+          "pattern": "^$|^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$"
+        },
+        "storage": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "existingClaim": {
+              "type": "string",
+              "maxLength": 253,
+              "pattern": "^$|^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$"
+            }
+          },
+          "required": [
+            "existingClaim"
+          ]
+        }
+      },
+      "required": [
+        "enabled",
+        "tokenSecretName",
+        "storage"
+      ]
+    },
+    "podSecurityContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "fsGroup": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        }
+      }
     }
   },
   "required": [
@@ -227,7 +271,9 @@
     "resources",
     "ingress",
     "route",
-    "tests"
+    "tests",
+    "live",
+    "podSecurityContext"
   ],
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Flowbridge Helm values",
@@ -297,6 +343,40 @@
             "properties": {
               "host": {
                 "minLength": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "live": {
+            "properties": {
+              "enabled": {
+                "const": true
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "replicaCount": {
+            "const": 1
+          },
+          "live": {
+            "properties": {
+              "tokenSecretName": {
+                "minLength": 1
+              },
+              "storage": {
+                "properties": {
+                  "existingClaim": {
+                    "minLength": 1
+                  }
+                }
               }
             }
           }

@@ -3,3 +3,6 @@ __pycache__
 tests
 local-output
 .env
+.secrets
+.flowbridge-state
+*.db*
