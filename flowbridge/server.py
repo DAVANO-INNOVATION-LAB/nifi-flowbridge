@@ -1,6 +1,7 @@
 """Loopback-only by default; no input execution or external service calls."""
 import json
 import os
+import re
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -16,7 +17,7 @@ class Handler(BaseHTTPRequestHandler):
     def log_message(self, *args):
         pass  # Inputs, headers, and uploaded secrets must never reach access logs.
 
-    def send(self, status, body, content_type="application/json", attachment=False):
+    def send(self, status, body, content_type="application/json", attachment=False, extra_headers=None):
         if isinstance(body, dict):
             body = json.dumps(body).encode()
         self.send_response(status)
@@ -27,8 +28,11 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; frame-ancestors 'none'; base-uri 'none'; form-action 'none'")
         if attachment:
             self.send_header("Content-Disposition", 'attachment; filename="flowbridge-export.zip"')
+        for key, value in (extra_headers or {}).items():
+            self.send_header(key, value)
         self.end_headers()
-        self.wfile.write(body)
+        if self.command != "HEAD":
+            self.wfile.write(body)
 
     def valid_origin(self):
         # Host validation defeats DNS rebinding; browser origins must match exactly.
@@ -39,10 +43,33 @@ class Handler(BaseHTTPRequestHandler):
         origins.update(value.strip() for value in os.environ.get("FLOWBRIDGE_ALLOWED_ORIGINS", "").split(",") if value.strip())
         return host in allowed and self.headers.get("Origin", f"http://{host}") in origins
 
+    def do_HEAD(self):
+        self.do_GET()
+
+    def send_demo_video(self):
+        data = (ROOT / "web" / "demo.mp4").read_bytes()
+        size = len(data)
+        headers = {"Accept-Ranges": "bytes"}
+        requested = self.headers.get("Range") if self.command != "HEAD" else None
+        if requested:
+            match = re.fullmatch(r"bytes=(\d*)-(\d*)", requested) if len(requested) <= 64 else None
+            if match and any(match.groups()):
+                left, right = match.groups()
+                start = int(left) if left else max(0, size - int(right))
+                end = min(size - 1, int(right)) if left and right else size - 1
+                if 0 <= start <= end < size:
+                    headers["Content-Range"] = f"bytes {start}-{end}/{size}"
+                    return self.send(206, data[start:end+1], "video/mp4", extra_headers=headers)
+            headers["Content-Range"] = f"bytes */{size}"
+            return self.send(416, b"", "video/mp4", extra_headers=headers)
+        return self.send(200, data, "video/mp4", extra_headers=headers)
+
     def do_GET(self):
         if not self.valid_origin():
             return self.send(403, {"error": "Local origin required"})
         path = urlsplit(self.path).path
+        if path == "/demo.mp4":
+            return self.send_demo_video()
         if path.startswith("/api/live/"):
             from .live import api
             if path == "/api/live/status":
@@ -76,7 +103,7 @@ class Handler(BaseHTTPRequestHandler):
             return self.send(200, json.loads((ROOT / "examples" / "nifi-http-airflow.json").read_text()))
         if path == "/api/example":
             return self.send(200, {"schema": "flowbridge/v1", "name": "order-events", "source": {"type": "kafka", "brokers": "localhost:9092", "topic": "orders-in", "group": "flowbridge-orders", "offset": "earliest"}, "sink": {"type": "kafka", "brokers": "localhost:9092", "topic": "orders-out"}})
-        files = {"/brand.png": ("brand.png", "image/png"), "/": ("index.html", "text/html; charset=utf-8"), "/index.html": ("index.html", "text/html; charset=utf-8"), "/style.css": ("style.css", "text/css"), "/app.js": ("app.js", "text/javascript"), "/ui.js": ("ui.js", "text/javascript")}
+        files = {"/demo.mp4": ("demo.mp4", "video/mp4"), "/demo-poster.png": ("demo-poster.png", "image/png"), "/brand.png": ("brand.png", "image/png"), "/": ("index.html", "text/html; charset=utf-8"), "/index.html": ("index.html", "text/html; charset=utf-8"), "/style.css": ("style.css", "text/css"), "/app.js": ("app.js", "text/javascript"), "/ui.js": ("ui.js", "text/javascript")}
         if path not in files:
             return self.send(404, {"error": "Not found"})
         name, mime = files[path]

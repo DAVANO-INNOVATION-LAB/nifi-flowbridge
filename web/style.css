@@ -10,3 +10,5 @@
 .media-lanes{display:grid;gap:10px;margin:18px 0}.media-lanes>div{padding:14px 18px;background:#f4f2ec;border-left:4px solid #ff6b24;border-radius:6px;font-weight:600}#media-demo{margin-bottom:24px}
 
 footer{justify-content:center;align-items:center;flex-direction:column;text-align:center;gap:10px}.footer-brand{justify-content:center}
+
+.demo-video{margin-bottom:24px}.demo-video video{display:block;width:100%;height:auto;max-height:75vh;background:#0b0d10;border-radius:8px}.demo-video .panel-heading{gap:16px;flex-wrap:wrap}

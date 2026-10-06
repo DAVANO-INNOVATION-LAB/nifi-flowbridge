@@ -61,3 +61,18 @@ class ServerTests(unittest.TestCase):
     def test_path_traversal_and_wrong_content_type(self):
         self.assertEqual(self.request("GET", "/../flowbridge/server.py")[0], 404)
         self.assertEqual(self.request("POST", "/api/convert", {"document": {}}, {"Content-Type": "text/plain"})[0], 415)
+
+    def test_demo_video_supports_browser_seeking(self):
+        status, body, headers = self.request("GET", "/demo.mp4", headers={"Range": "bytes=0-31"})
+        self.assertEqual(status, 206)
+        self.assertEqual(len(body), 32)
+        self.assertIn(b"ftyp", body)
+        self.assertEqual(headers["Content-Type"], "video/mp4")
+        self.assertTrue(headers["Content-Range"].startswith("bytes 0-31/"))
+        status, suffix, _ = self.request("GET", "/demo.mp4", headers={"Range": "bytes=-16"})
+        self.assertEqual((status, len(suffix)), (206, 16))
+        self.assertEqual(self.request("GET", "/demo.mp4", headers={"Range": "bytes=999999999-"})[0], 416)
+        self.assertEqual(self.request("GET", "/demo.mp4", headers={"Range": "bytes=-0"})[0], 416)
+        status, body, headers = self.request("HEAD", "/demo.mp4")
+        self.assertEqual((status, body), (200, b""))
+        self.assertGreater(int(headers["Content-Length"]), 1000)

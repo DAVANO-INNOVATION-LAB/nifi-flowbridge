@@ -30,6 +30,8 @@ The workbench uses local assets and needs no cloud account or CDN. Preload the a
 
 ## Three-stream media ETL demonstration
 
+The local UI includes a two-minute narrated [animated walkthrough](web/demo.mp4), visualizing recorded synthetic test evidence. It shows transfers, processing, recovery and target-specific limits; it is not a live screen recording or proof of universal native migration.
+
 Choose **Try three-stream media ETL** in the UI. It loads three source buckets (images, text, video), separate destination buckets, Kafka reference-event topics and processing endpoints. The recorded evidence panel shows successful copies, retry recovery, deduplication, and deliberate terminal failures from isolated S3Mock/Kafka fixtures. No cloud account is required for the demonstration.
 
 The reference worker has a persistent SQLite ledger, version/ETag identity, leased jobs, acknowledged Kafka publication before copying, deterministic destination keys, processing completion records, bounded retries and dead-letter publication. It never deletes source objects. Objects are bounded to 64 MiB in this demonstration; media inspection extracts basic metadata, not transcoding or OCR. Kafka is a durable event journal; SQLite remains the work queue.
