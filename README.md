@@ -65,7 +65,7 @@ The initial implementation has automated converter, round-trip, malformed-input,
 python -m unittest discover -s tests -v
 ```
 
-The generated Kafka project was compiled with Java 17 and Kafka Streams 3.9.1. Its `TopologyTestDriver` tests passed for byte keys, binary values, headers, tombstones and feedback-loop rejection. These tests do not use a live Kafka broker. NiFi, SeaTunnel and Camel K outputs have **not** been deployed or runtime validated. CI repeats the Python tests and generated Java tests.
+The generated Kafka project was compiled with Java 17 and Kafka Streams 3.9.2. Its `TopologyTestDriver` tests passed for byte keys, binary values, headers, tombstones and feedback-loop rejection. These tests do not use a live Kafka broker. NiFi, SeaTunnel and Camel K outputs have **not** been deployed or runtime validated. CI repeats the Python tests and generated Java tests.
 
 ## Architecture, research and contribution
 

@@ -3,8 +3,8 @@
   <groupId>io.davano.flowbridge</groupId><artifactId>generated-flow</artifactId><version>0.1.0</version>
   <properties><maven.compiler.release>17</maven.compiler.release><project.build.sourceEncoding>UTF-8</project.build.sourceEncoding></properties>
   <dependencies>
-    <dependency><groupId>org.apache.kafka</groupId><artifactId>kafka-streams</artifactId><version>3.9.1</version></dependency>
-    <dependency><groupId>org.apache.kafka</groupId><artifactId>kafka-streams-test-utils</artifactId><version>3.9.1</version><scope>test</scope></dependency>
+    <dependency><groupId>org.apache.kafka</groupId><artifactId>kafka-streams</artifactId><version>3.9.2</version></dependency>
+    <dependency><groupId>org.apache.kafka</groupId><artifactId>kafka-streams-test-utils</artifactId><version>3.9.2</version><scope>test</scope></dependency>
     <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter</artifactId><version>5.11.4</version><scope>test</scope></dependency>
     <dependency><groupId>org.slf4j</groupId><artifactId>slf4j-simple</artifactId><version>1.7.36</version></dependency>
   </dependencies>
