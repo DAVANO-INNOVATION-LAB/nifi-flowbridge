@@ -50,6 +50,8 @@ def dispatch(path, payload):
         operation = path.rsplit("/", 1)[-1]
         if kind == "nifi":
             platform = NiFiClient(client)
+            if operation == "discover":
+                return platform.discover(payload.get("group_id") or "root")
             if operation == "inspect":
                 return platform.inspect(payload.get("group_id"))
             if operation == "export":

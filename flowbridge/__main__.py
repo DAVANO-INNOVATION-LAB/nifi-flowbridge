@@ -16,7 +16,7 @@ def main():
         p.add_argument("--nifi-version", default="auto")
         if command == "convert":
             p.add_argument("--one-shot-batch", action="store_true", help="Acknowledge conversion to a manually triggered one-shot Airflow workflow")
-            p.add_argument("--target", required=True, choices=["nifi", "seatunnel", "camel-k", "kafka", "flowbridge", "airflow", "nifi-upgrade", "continuous-worker"])
+            p.add_argument("--target", required=True, choices=["nifi", "seatunnel", "camel-k", "kafka", "flowbridge", "airflow", "nifi-upgrade", "continuous-worker", "s3-fleet"])
             p.add_argument("--output", type=Path, required=True)
             p.add_argument("--accept-warnings", action="store_true", help="Export review artifacts despite compatibility warnings")
     serve = sub.add_parser("serve")

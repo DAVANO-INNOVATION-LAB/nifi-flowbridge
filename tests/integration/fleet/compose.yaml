@@ -1,0 +1,21 @@
+name: flowbridge-fleet-proof
+services:
+  source:
+    image: adobe/s3mock:5.1.0
+    mem_limit: 512m
+    cpus: 1
+    environment:
+      JAVA_TOOL_OPTIONS: -Xms128m -Xmx256m
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+  target:
+    image: adobe/s3mock:5.1.0
+    mem_limit: 512m
+    cpus: 1
+    environment:
+      JAVA_TOOL_OPTIONS: -Xms128m -Xmx256m
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+networks:
+  default:
+    internal: true

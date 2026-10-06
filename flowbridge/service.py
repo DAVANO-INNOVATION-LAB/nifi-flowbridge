@@ -40,6 +40,11 @@ def assess(data, source="auto", nifi_version="auto"):
 
 
 def convert(data, source="auto", target="flowbridge", batch_contract=None, nifi_version="auto"):
+    if target == "s3-fleet":
+        if source not in ("auto", "nifi") or nifi_version not in ("auto", "2", "2.12.0"):
+            return {"report":{"ok":False,"errors":[{"code":"unsupported_version","message":"Fleet execution requires verified NiFi 2.12 mappings."}],"warnings":[]},"files":{}}
+        from .fleet import export_fleet
+        return export_fleet(data)
     if target == "continuous-worker":
         declared = nifi_version if nifi_version != "auto" else data.get("nifiVersion")
         if source not in ("auto", "nifi") or (declared is not None and (not isinstance(declared,str) or declared.split(".",1)[0] != "2")):

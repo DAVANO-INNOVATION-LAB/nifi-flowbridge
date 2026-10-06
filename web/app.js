@@ -2,6 +2,7 @@
 const $ = id => document.getElementById(id);
 const MAX_BYTES = 2 * 1024 * 1024;
 const descriptions = {
+  "s3-fleet": "Export mapped S3 pipelines from the full NiFi estate. Unsupported dependencies block the package; assessment alone does not approve deployment or cutover.",
   "continuous-worker": "Export an executable polling worker for the strict three-lane NiFi S3 profile. Controlled stop/drain and byte reconciliation are required before cutover; new arrivals remain in source storage.",
   airflow: "Generate a paused Airflow DAG for explicitly supported one-shot HTTP and transformation workflows. Streaming semantics and unmapped processors block export.",
   "nifi-upgrade": "Prepare a review-only NiFi 1 to 2 rule plan. This does not produce a validated NiFi 2 flow or change your source.",
@@ -14,8 +15,8 @@ const descriptions = {
 let preparedRequest = null;
 let busy = false;
 function status(message, error = false) { $('status').textContent = message; $('status').classList.toggle('error', error); }
-function setBusy(value) { busy = value; for (const id of ['analyze-button', 'convert-button', 'example-button', 'http-example-button', 'media-example-button', 'continuous-example-button', 'clear-button', 'nifi-version', 'partial-ack', 'batch-contract']) $(id).disabled = value; $('download-button').disabled = value || !$('review-ack').checked || !preparedRequest; $('review-ack').disabled = value; $('source').disabled = value; $('target').disabled = value; $('document').readOnly = value; $('file-input').disabled = value; platformControls(); }
-function invalidate() { preparedRequest = null; $('review-ack').checked = false; $('download-button').disabled = true; $('artifacts').hidden = true; $('report').hidden = true; $('graph-assessment').hidden = true; $('cutover-guide').hidden = true; status($('document').value.trim() ? 'Flow added. Check the source or prepare an export.' : 'Add a flow to begin.'); }
+function setBusy(value) { busy = value; for (const id of ['analyze-button', 'convert-button', 'example-button', 'http-example-button', 'media-example-button', 'continuous-example-button', 'clear-button', 'nifi-version', 'partial-ack', 'batch-contract', 'fleet-example', 'fleet-assess']) $(id).disabled = value; $('download-button').disabled = value || !$('review-ack').checked || !preparedRequest; $('review-ack').disabled = value; $('source').disabled = value; $('target').disabled = value; $('document').readOnly = value; $('file-input').disabled = value; platformControls(); }
+function invalidate() { $('fleet-results').hidden = true; $('fleet-status').textContent = 'Source changed. Assess the entire estate again; previous mapping results are stale.'; preparedRequest = null; $('review-ack').checked = false; $('download-button').disabled = true; $('artifacts').hidden = true; $('report').hidden = true; $('graph-assessment').hidden = true; $('cutover-guide').hidden = true; status($('document').value.trim() ? 'Flow added. Check the source or prepare an export.' : 'Add a flow to begin.'); }
 function requestBody() {
   const raw = $('document').value.trim();
   if (!raw) throw new Error('Add a JSON flow document first.');
@@ -270,6 +271,7 @@ let platformBusy = false;
 function platformStatus(message, error = false) { $('platform-status').textContent = message; $('platform-status').classList.toggle('error', error); }
 function platformControls() {
   $('platform-inspect').disabled = platformBusy || !liveEnabled;
+  $('platform-discover').disabled = platformBusy || !liveEnabled || $('platform-kind').value !== 'nifi';
   $('platform-export').disabled = platformBusy || !liveEnabled || $('platform-kind').value === 'seatunnel' || busy;
   for (const control of $('platform-form').querySelectorAll('input,select')) control.disabled = platformBusy;
 }
@@ -281,7 +283,7 @@ function platformPayload() {
   if (url.protocol !== 'https:' && !(allowLocal && url.protocol === 'http:' && ['127.0.0.1', '[::1]'].includes(url.hostname))) throw new Error('HTTPS is required. For a local test, explicitly allow HTTP and use 127.0.0.1 or [::1].');
   const platform = $('platform-kind').value;
   const payload = {platform, url: raw, bearer_token: $('platform-bearer').value, allow_http_loopback: allowLocal};
-  if (platform === 'nifi') { payload.group_id = $('platform-group').value.trim(); if (!payload.group_id) throw new Error('Enter the NiFi process group ID.'); }
+  if (platform === 'nifi') { payload.group_id = $('platform-group').value.trim() || 'root'; if (!payload.group_id) throw new Error('Enter the NiFi process group ID.'); }
   if (platform === 'camel-k') { payload.namespace = $('platform-namespace').value.trim(); payload.name = $('platform-integration').value.trim(); if (!payload.namespace || !payload.name) throw new Error('Enter the namespace and Camel K integration name.'); }
   if (platform === 'seatunnel') { payload.job_id = $('platform-job').value.trim(); if (!payload.job_id) throw new Error('Enter the SeaTunnel job ID.'); }
   return payload;
@@ -302,12 +304,13 @@ async function platformOperation(operation) {
       $('document').value = document; $('source').value = result.source; $('file-input').value = ''; $('file-detail').textContent = `Fetched from running ${result.source === 'nifi' ? 'NiFi' : 'Camel K'} · review before conversion`; invalidate();
       platformStatus('Flow loaded into the converter above. Check compatibility before preparing any export. Nothing was deployed or started.');
       status('A connected flow was imported. Check its source and destination compatibility before deployment.');
-    } else { $('platform-result').textContent = JSON.stringify(safeLiveSummary(result), null, 2); $('platform-result').hidden = false; platformStatus('Inspection complete. No platform workload was modified.'); }
+    } else { $('platform-result').textContent = JSON.stringify(safeLiveSummary(result), null, 2); $('platform-result').hidden = false; platformStatus(operation === 'discover' ? `Discovered ${result.workflow_count} workflow groups. ${result.complete ? 'Scope scan complete.' : 'Scan incomplete; review access or scope limits.'} No deployment or cutover occurred.` : 'Inspection complete. No platform workload was modified.'); }
   } catch (error) { platformStatus(error.message || 'The platform request could not be completed.', true); }
   finally { platformBusy = false; platformControls(); }
 }
 $('platform-form').addEventListener('submit', event => { event.preventDefault(); platformOperation('inspect'); });
 $('platform-export').addEventListener('click', () => platformOperation('export'));
+$('platform-discover').addEventListener('click', () => platformOperation('discover'));
 $('platform-url').addEventListener('input', () => { $('platform-bearer').value = ''; $('platform-result').hidden = true; });
 $('platform-kind').addEventListener('change', () => {
   const kind = $('platform-kind').value;
@@ -379,4 +382,53 @@ $('continuous-example-button').addEventListener('click', async () => {
     status('Native flow loaded. Assess its full inventory, then prepare the continuous-worker export and review the cutover instructions.');
   } catch (error) { status(error.message, true); }
   finally { setBusy(false); }
+});
+
+
+
+// Estate assessment is read-only. Never infer migration readiness from mapped counts.
+function renderFleet(result) {
+  const rows = Array.isArray(result.inventory) ? result.inventory : [];
+  const counts = {mapped:0,blocked:0,unknown:0};
+  $('fleet-rows').replaceChildren();
+  for (const item of rows) {
+    const state = item.mapped === true ? 'mapped' : item.mapped === false ? 'blocked' : 'unknown'; counts[state]++;
+    const row = document.createElement('tr');
+    const location = Array.isArray(item.path) ? item.path.join(' / ') : item.path || 'Not reported';
+    for (const value of [item.name || item.id || 'Unnamed pipeline',location,Array.isArray(item.processor_ids) ? item.processor_ids.length : 'Unknown',state === 'mapped' ? 'Mapped · review required' : state === 'blocked' ? 'Blocked' : 'Unknown',item.reason ? findingText(item.reason) : state === 'mapped' ? 'Supported mapping; execution still needs validation.' : 'No mapping explanation was supplied.']) {
+      const cell=document.createElement('td');cell.textContent=String(value);row.append(cell);
+    }
+    $('fleet-rows').append(row);
+  }
+  $('fleet-results').hidden=false;
+  $('fleet-summary').textContent=`${rows.length} pipelines · ${counts.mapped} mapped · ${counts.blocked} blocked · ${counts.unknown} unknown. Mapping coverage is not deployment readiness.`;
+  $('fleet-findings').textContent=JSON.stringify(safeLiveSummary(result.report || {}),null,2);
+  const allowed=result.report?.ok === true && !counts.blocked && !counts.unknown && rows.length>0;
+  $('fleet-status').textContent=allowed ? 'Assessment complete. Review findings before preparing a fleet export. No migration has started.' : 'Estate assessment has unresolved blockers or unknown coverage. The entire cutover remains blocked.';
+  $('fleet-status').classList.toggle('error',!allowed);
+}
+$('fleet-example').addEventListener('click',async()=>{
+  if(busy)return;setBusy(true);
+  try {
+    const response=await fetch('/api/example/fleet');if(!response.ok)throw new Error('The fleet example could not be loaded.');
+    const data=await response.json();const raw=JSON.stringify(data.document || data,null,2);
+    if(new TextEncoder().encode(raw).length>MAX_BYTES)throw new Error('The fleet example exceeds the 2 MB input limit.');
+    $('document').value=raw;$('source').value='nifi';$('target').value='s3-fleet';$('target-description').textContent=descriptions['s3-fleet'];$('batch-contract-label').hidden=true;$('file-input').value='';invalidate();
+    $('file-detail').textContent='Synthetic 60-pipeline estate loaded · no live system connected';
+    $('fleet-status').textContent='Example loaded into the editor. Assess the estate to see actual coverage.';
+  }catch(error){$('fleet-status').textContent=error.message;}
+  finally{setBusy(false);}
+});
+$('fleet-assess').addEventListener('click',async()=>{
+  if(busy)return;let body;
+  try{body=requestBody();}catch(error){$('fleet-status').textContent=error.message;return;}
+  setBusy(true);$('fleet-results').hidden=true;$('fleet-status').textContent='Assessing every pipeline in the supplied export…';
+  const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),30000);
+  try{
+    const response=await fetch('/api/fleet/assess',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({document:body.document}),signal:controller.signal});
+    const result=await response.json();
+    if(!response.ok && !Array.isArray(result.inventory))throw new Error(errorMessage(result.error)||'The estate assessment could not be completed.');
+    renderFleet(result);
+  }catch(error){$('fleet-status').textContent=error.name==='AbortError' ? 'Assessment timed out. Retry when the local server responds.' : error.message || 'Cannot reach the local server. Your source remains in the editor.';}
+  finally{clearTimeout(timer);setBusy(false);}
 });

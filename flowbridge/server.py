@@ -89,6 +89,8 @@ class Handler(BaseHTTPRequestHandler):
             return self.send(404, {"error": "Not found"})
         if path == "/api/health":
             return self.send(200, {"status": "ok", "version": "0.3.0", "mode": "local"})
+        if path == "/api/example/fleet":
+            return self.send(200, json.loads((ROOT / "examples" / "nifi-fleet-60.json").read_text()))
         if path == "/api/example/continuous":
             return self.send(200, json.loads((ROOT / "examples" / "nifi-continuous-media.json").read_text()))
         if path == "/api/demo/continuous/evidence":
@@ -120,7 +122,7 @@ class Handler(BaseHTTPRequestHandler):
         if not self.valid_origin():
             return self.send(403, {"error": "Local origin required"})
         live = self.path.startswith("/api/live/")
-        if self.path not in ("/api/analyze", "/api/assess", "/api/convert", "/api/download", "/api/import-package") and not live:
+        if self.path not in ("/api/analyze", "/api/assess", "/api/convert", "/api/download", "/api/import-package", "/api/fleet/assess") and not live:
             return self.send(404, {"error": "Not found"})
         if live:
             from .live import api
@@ -167,9 +169,13 @@ class Handler(BaseHTTPRequestHandler):
             source = payload.get("source", "auto")
             target = payload.get("target", "flowbridge")
             formats = ("nifi", "seatunnel", "camel-k", "kafka", "flowbridge")
-            if not isinstance(source, str) or source not in ("auto",) + formats or not isinstance(target, str) or target not in formats + ("airflow", "nifi-upgrade", "continuous-worker"):
+            if not isinstance(source, str) or source not in ("auto",) + formats or not isinstance(target, str) or target not in formats + ("airflow", "nifi-upgrade", "continuous-worker", "s3-fleet"):
                 raise ValueError("Unknown format")
             from .service import analyze, assess, convert
+            if self.path == "/api/fleet/assess":
+                from .fleet import discover_fleet
+                result = discover_fleet(document)
+                return self.send(200 if result["report"]["ok"] else 422, result)
             if self.path == "/api/assess":
                 result = assess(document, source, payload.get("nifi_version", "auto"))
                 return self.send(200, result)

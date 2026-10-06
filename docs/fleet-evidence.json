@@ -1,0 +1,474 @@
+{
+  "result": "passed",
+  "recorded_at": "2026-10-06T23:04:54.106905+00:00",
+  "pipelines": 60,
+  "native_nifi_runtime_executed": false,
+  "blue_runtime": "synthetic Python producer/blue worker",
+  "s3_runtime": "Adobe S3Mock 5.1.0",
+  "network": "internal Docker network, no host ports",
+  "memory_limits_mib": 1408,
+  "total_produced": 79,
+  "total_production_objects": 79,
+  "missing": 0,
+  "all_hashes_and_media_metadata_matched": true,
+  "single_pipeline_mismatch_blocked": true,
+  "unconfigured_cutover_blocked": true,
+  "trusted_blue_worker_joined": true,
+  "restart_repeat_processed": 0,
+  "timeline": [
+    {
+      "phase": "blue_running",
+      "timestamp": "2026-10-06T23:04:45.672322+00:00",
+      "produced": 60,
+      "runtime": "synthetic Python worker; not NiFi"
+    },
+    {
+      "phase": "shadow_validated",
+      "timestamp": "2026-10-06T23:04:48.672880+00:00",
+      "produced": 67,
+      "pipelines": 60,
+      "objects": 65
+    },
+    {
+      "phase": "one_pipeline_mismatch_blocks_fleet",
+      "timestamp": "2026-10-06T23:04:49.286739+00:00",
+      "produced": 68,
+      "failures": 3
+    },
+    {
+      "phase": "unconfigured_fence_blocked",
+      "timestamp": "2026-10-06T23:04:49.946230+00:00",
+      "produced": 70,
+      "production_changed": false
+    },
+    {
+      "phase": "trusted_cutover",
+      "timestamp": "2026-10-06T23:04:50.784940+00:00",
+      "produced": 72,
+      "blue_joined": true,
+      "baseline": {
+        "pending_backfill": 1,
+        "source_state_imported": false,
+        "verified_existing": 70
+      }
+    },
+    {
+      "phase": "later_arrivals_processed",
+      "timestamp": "2026-10-06T23:04:53.808278+00:00",
+      "produced": 79
+    },
+    {
+      "phase": "reconciled",
+      "timestamp": "2026-10-06T23:04:54.106897+00:00",
+      "produced": 79,
+      "objects": 79,
+      "missing": 0,
+      "restart_repeat": 0
+    }
+  ],
+  "objects": [
+    {
+      "pipeline_id": "40df71ee-0dd7-52f4-be89-73e3a16313d9",
+      "key": "initial",
+      "sha256": "356531eaf38c1fb19652949eeb35fade9be69a7baca34ca689812d0ecd7754ca"
+    },
+    {
+      "pipeline_id": "17683037-f623-5442-9892-ef7e10285416",
+      "key": "initial",
+      "sha256": "e55e0d03a86eecec79fd420fbdec4aab9d76f058da807b297763f78d8ac60263"
+    },
+    {
+      "pipeline_id": "0e92b93c-34c7-57fb-b7c6-027ee7fa1053",
+      "key": "initial",
+      "sha256": "0fd787dee9bd33177813888090acdbf31aa9381b3cc06960f6ab84049309ca5c"
+    },
+    {
+      "pipeline_id": "c30b1cfe-c842-5aa6-9ecb-1568bffe91fb",
+      "key": "initial",
+      "sha256": "788d57f4b39d66f1a0a1d38a31485c7be6dc2567bd9449c57eede883f0db754d"
+    },
+    {
+      "pipeline_id": "adbcbe1b-3130-5cc3-b15f-ccbf9cb7ad6b",
+      "key": "initial",
+      "sha256": "c5b62826f5a0b40d55e44f91a124f26461fabd85b5143fab06467c63481a2f28"
+    },
+    {
+      "pipeline_id": "feb973fb-53c2-558c-be7d-e0bf5f2b6761",
+      "key": "initial",
+      "sha256": "e53635978e01ad688571cc6d156931bff85c7778c96751ef13a7f6f07ca09739"
+    },
+    {
+      "pipeline_id": "5b7f6099-697e-522b-9d8e-83392269397c",
+      "key": "initial",
+      "sha256": "20dbc9ea7565d6823c3a2e407782e12273b0a935326621c767ebfe7180004b38"
+    },
+    {
+      "pipeline_id": "c6704c45-038a-5539-9bec-752e521e2c97",
+      "key": "initial",
+      "sha256": "74d5b6428deb402b7868e21e5a5d17325beca0d6af20b642742b944624086125"
+    },
+    {
+      "pipeline_id": "94150b8e-ecf1-5cdc-a61e-aad8859ccb1b",
+      "key": "initial",
+      "sha256": "c8ff0951b0803bd9fead949b9c7b2752c57eabb772143b0b05cd175dde958e20"
+    },
+    {
+      "pipeline_id": "ca370d89-5d5b-5fec-8ab5-9a42cc413926",
+      "key": "initial",
+      "sha256": "3689b44b8a9af2a10dd805c1ca0d41933fccfe680620383b24b298754ff89dd4"
+    },
+    {
+      "pipeline_id": "8aeaa997-9db6-519a-a62b-22edaf33eda3",
+      "key": "initial",
+      "sha256": "2f38df177e38d0f334c7b4439d4a8afad9be6c7fa8cf1675dca8097e77b3b932"
+    },
+    {
+      "pipeline_id": "1fc92407-f245-5d8b-9053-00c485faffa3",
+      "key": "initial",
+      "sha256": "34e9b9a14ec4b81fe291faa9531d22b73b24942c9fd22136a5dfd729e54dfda8"
+    },
+    {
+      "pipeline_id": "b1fc4a54-3097-5809-8a07-d936360a219a",
+      "key": "initial",
+      "sha256": "65a10916532d98d1f7a08f2c29004ede9a449d7a23572e59e47ee63e052b4e48"
+    },
+    {
+      "pipeline_id": "ed15fb33-0b98-5b87-80bf-c502be76ff0c",
+      "key": "initial",
+      "sha256": "478b0ad0f2ecf5e382c60c01c57e9979c24d13d0e3e21d79a2027d6ba279e424"
+    },
+    {
+      "pipeline_id": "a8360f60-fd0a-54ee-91ec-34312f9e3339",
+      "key": "initial",
+      "sha256": "612f16090f6aff02b2b17513939d35fa6c7f74505c6045a6fab434510556ff2e"
+    },
+    {
+      "pipeline_id": "e15a3720-3388-5207-b7d7-9a15e7efa395",
+      "key": "initial",
+      "sha256": "461c3968cf0b3da7c2da1695d69b3391f314ce5883d39a482101f12f7da0118f"
+    },
+    {
+      "pipeline_id": "5a767bfe-8dd3-5668-94ab-123dd18e77f5",
+      "key": "initial",
+      "sha256": "f1186c287245284f57b8a30dd32b8e0ce44a6a9387a3d6a36740656cfd52149f"
+    },
+    {
+      "pipeline_id": "a9020f15-f0ea-5ae9-a1b1-0d1f3add203c",
+      "key": "initial",
+      "sha256": "49ccdf2cb1874f901a8f71a4c75a0db5973abbe30f1f4b44af1bfee0cd54d710"
+    },
+    {
+      "pipeline_id": "164a814c-2bcc-5034-b7ad-f26c0c6ffbce",
+      "key": "initial",
+      "sha256": "ad2225dbbbed539cfdc80fdba74827ba262a67cbf1bd790ae6e7cd76956386a0"
+    },
+    {
+      "pipeline_id": "1e1ccdca-e700-5fbf-8ea6-5e3e31c7ca32",
+      "key": "initial",
+      "sha256": "a8380cb923006265e357f47a34e8a7f115e2f1e104373849eec7c7156a5c5c27"
+    },
+    {
+      "pipeline_id": "75f7e163-fee8-5059-b6f9-8210e535ecda",
+      "key": "initial",
+      "sha256": "a4ce44ec582aa6f9e5137430c24696779a4bb1c67a072d088bfe2292c79daf1b"
+    },
+    {
+      "pipeline_id": "d5b899dc-6a89-58ac-9b1a-3226bf61df10",
+      "key": "initial",
+      "sha256": "99457de3fbb4ec724ac3ff0f137e199b632a9946e7df0d0562192d759fc277da"
+    },
+    {
+      "pipeline_id": "73f32b73-26e5-58e8-857e-582ea145b5fe",
+      "key": "initial",
+      "sha256": "97fbeb36ff72adbc03d58373ea288f7a34a458fcc44b55bab58d7f7a6f4d14d1"
+    },
+    {
+      "pipeline_id": "e081fdf4-edca-55c2-869f-6d378ae40342",
+      "key": "initial",
+      "sha256": "b50ca406deece300b3bb37f73f68fa88477983943f719c3929ace2af717cec63"
+    },
+    {
+      "pipeline_id": "20b1f6fc-f5c8-5503-ae7f-23882241d3e5",
+      "key": "initial",
+      "sha256": "5574839d1ee5644cdf14ef42299d049b914b5a26f45d9f7e2e49afb946392306"
+    },
+    {
+      "pipeline_id": "239b5bd2-ea1a-5363-b003-be1d0794c0ef",
+      "key": "initial",
+      "sha256": "59fa5bd52472a82fc28868e7029f890e1cbd7ea45a86114762d134677f2aa425"
+    },
+    {
+      "pipeline_id": "48cfa79c-57ac-5613-b8cb-14d3306b8872",
+      "key": "initial",
+      "sha256": "53f37671d2aecdc367cfb5f871dd86e3fe7512bc20ebe556ad8b17577439c862"
+    },
+    {
+      "pipeline_id": "0b24930a-c658-5072-810a-4e4249a22aef",
+      "key": "initial",
+      "sha256": "95786b17fb56010a1e003965bda728bb712665aa921bef01b365a148ea4d6093"
+    },
+    {
+      "pipeline_id": "e6701ef1-048f-59b6-ade1-f2152f7eb8ad",
+      "key": "initial",
+      "sha256": "9b086dafed27cfddd1da35c9f3a6663aa59f9107da38ff1bdbe202d2cb8859ff"
+    },
+    {
+      "pipeline_id": "6fb908eb-c3c2-5cd0-80a4-7c9e479f0259",
+      "key": "initial",
+      "sha256": "24f6d7c41df80e002ef4997a1c6dbf025cef00dac746a0f91804bbf53ed50b17"
+    },
+    {
+      "pipeline_id": "5e14ce00-7a21-5d4e-ae44-490667110e2c",
+      "key": "initial",
+      "sha256": "d394e549a7a1d8a7f60b7ed747ffa5e71186260b43277b54d3708f32800c4bf0"
+    },
+    {
+      "pipeline_id": "689ca069-d2d6-5b25-be7a-35b05a6c295c",
+      "key": "initial",
+      "sha256": "433ddc77cbd74d7b8518b7893263030f596f021ad0e114157e5c9fb2a74fc389"
+    },
+    {
+      "pipeline_id": "afed426c-e2aa-5cdf-b66c-9cd0fec1ad64",
+      "key": "initial",
+      "sha256": "ae5bca0f2a1324ebbf6441e76d59593a2bb0d764615fef60613b4f0f561dfb58"
+    },
+    {
+      "pipeline_id": "90105fca-ce0e-5696-ab5e-b83dc8e46a84",
+      "key": "initial",
+      "sha256": "6ff0629abe82c6480c6eb645f66c76a91209e5febd546837d754730cda96dcb1"
+    },
+    {
+      "pipeline_id": "d3f3703b-dd86-53c1-ad14-f10211809792",
+      "key": "initial",
+      "sha256": "9a1661611a125bcdfa6a62da058d88ca6a91429bcf544ee2ae0541e6094c50e6"
+    },
+    {
+      "pipeline_id": "b368cd05-05e5-54f4-8875-7f13df443300",
+      "key": "initial",
+      "sha256": "e3792f133399a2576f35e5d937e3d56d067f37f3da62a6ac14d6c6ea5b192be8"
+    },
+    {
+      "pipeline_id": "8df99542-2edc-5fbd-b51c-b455ab6f33c4",
+      "key": "initial",
+      "sha256": "8a44ee494769476f8f0da5e7386982690f9220f0f5748d134be8492706adfe5a"
+    },
+    {
+      "pipeline_id": "67009162-39e5-5b4b-8166-c547a425e9b0",
+      "key": "initial",
+      "sha256": "8b9ed01f340274e07ae6696b0984243c5e73e8474ed09eb7643f6765d1f9ef4d"
+    },
+    {
+      "pipeline_id": "8fe27e8d-49c9-5b8b-a271-a5c05f6e95fe",
+      "key": "initial",
+      "sha256": "4206b84a58c2cec02c80e8e0b83e21084729927673d72c8e2ec758aee6c8ef6a"
+    },
+    {
+      "pipeline_id": "3154c9b5-cf96-561f-919c-415aeb388704",
+      "key": "initial",
+      "sha256": "6e5342bfeb6b4cb970a8d13ab1e9ed7714d5ec5bdd28185931855c9367475378"
+    },
+    {
+      "pipeline_id": "95a000ff-cafc-56db-8d0e-06b45f605b27",
+      "key": "initial",
+      "sha256": "20fb99fdf4a18ea3158eb5a0023522372c785f8e73ad291988bf62ea1af8292c"
+    },
+    {
+      "pipeline_id": "de93a033-a044-5790-a900-38cac1492628",
+      "key": "initial",
+      "sha256": "3e4f988c27fb53288f39ef383a19d2ce5245392fac6f1a3669a384af1d288236"
+    },
+    {
+      "pipeline_id": "efe2e067-6b91-5508-816f-69fdff8885ae",
+      "key": "initial",
+      "sha256": "af502304126edf2f5494da08e0d88548e70e3dc7c76f50cf2bd2df4184160dcb"
+    },
+    {
+      "pipeline_id": "4e20be4c-4422-5354-98c1-de2fb2b744b8",
+      "key": "initial",
+      "sha256": "27ff0e1917c002884847854fcc3d4d7c6304fd2bd00559900837c43270e2d846"
+    },
+    {
+      "pipeline_id": "92e076da-e441-559e-a668-2a8325da2ebc",
+      "key": "initial",
+      "sha256": "6b5f6d495bb0f96803561e70b2b6df543af4ab97783a01fc00aa40cb5f0a6a48"
+    },
+    {
+      "pipeline_id": "09d5f727-ad6b-5533-8a07-118d615dc522",
+      "key": "initial",
+      "sha256": "155e7889ba700c95e0029fae7f63f9ab99d1a184fb8c9afe5c3fd75d2e7eb0b9"
+    },
+    {
+      "pipeline_id": "d8faa2ed-a929-524b-b080-d2a825274f62",
+      "key": "initial",
+      "sha256": "1001df82ee8132f26d33147dca0f62e711ec2660641ce62f82b4eaa4d83f0f43"
+    },
+    {
+      "pipeline_id": "39260cb3-b94a-591f-a4f2-7e1dd828c3b0",
+      "key": "initial",
+      "sha256": "e112447b6ad7f44778e299fb2b662612f2e3583d6992b4e197feeea6a169fa03"
+    },
+    {
+      "pipeline_id": "23abbdc2-70ed-5a55-8b52-30233d09cad6",
+      "key": "initial",
+      "sha256": "81e8af5e4dd8fe3144f93a3d9680406984cb47aa51b69d165fe6dd91028d6129"
+    },
+    {
+      "pipeline_id": "f029b1c2-9daf-552d-b96a-88587642de0d",
+      "key": "initial",
+      "sha256": "450625d77108b2a45e7e469821815ca3a6acc66117b195d5c91709dd473b8794"
+    },
+    {
+      "pipeline_id": "ca17d199-1c42-58bf-baa9-2555391282e1",
+      "key": "initial",
+      "sha256": "3cb46807e7b79d16c45df56b4cabada2beae5496e6a99177f820e6ba7e7338e6"
+    },
+    {
+      "pipeline_id": "fd02dfc9-1ee5-59e9-80c1-99f5b29fef69",
+      "key": "initial",
+      "sha256": "cae026fd9ee63e445876aa3535a8656fa05127f37f3479246b96ade06005cb9c"
+    },
+    {
+      "pipeline_id": "6881b3e2-37a9-5728-9f9c-e8225a7406f1",
+      "key": "initial",
+      "sha256": "5ec3aa965c126454a727fd3adee72abf20da411d6c7d29d6dd5f226845df6396"
+    },
+    {
+      "pipeline_id": "aa76d232-3ccf-5fa8-a759-97c22031b976",
+      "key": "initial",
+      "sha256": "e7e87ce5a5852f880e7030dde7e6e7d7bde051448a669e3d85c70fa68c94dcbb"
+    },
+    {
+      "pipeline_id": "620698bb-2030-5549-9fdf-0a64475c1816",
+      "key": "initial",
+      "sha256": "a0b928b2ad4044888433b0ba511722b400762b4b881b29e993afb167cd055a10"
+    },
+    {
+      "pipeline_id": "181a423a-9bf7-508d-a6ab-22fd0624bfc0",
+      "key": "initial",
+      "sha256": "e4a35af1554a7e02310ff4482e0371e96c5f61b88fea212aa3d6a9a021575cce"
+    },
+    {
+      "pipeline_id": "3d8cd59f-db54-55d8-93a5-5ca3f065e072",
+      "key": "initial",
+      "sha256": "216b9c3113616ce29995c9029cf56178a90a8e8ed5014d086b2c50b2605813f7"
+    },
+    {
+      "pipeline_id": "b4973163-945f-5384-b1c3-3fb3899893a6",
+      "key": "initial",
+      "sha256": "352818dc5919771b99634a695ad770e8fc793032e8be94945204a47a4e014a80"
+    },
+    {
+      "pipeline_id": "eb2186c3-5688-56d1-ae75-d37d26bb2f81",
+      "key": "initial",
+      "sha256": "e90d6eb1f7cc17c59e952e543bb16f250b3f7e841db1b5b71d12a532b9087940"
+    },
+    {
+      "pipeline_id": "e728364b-d4c0-5437-977e-46898a3982f1",
+      "key": "initial",
+      "sha256": "36e827bd9ce0583c91da42227556ea65779462710e4b30cb392b67217b3de134"
+    },
+    {
+      "pipeline_id": "40df71ee-0dd7-52f4-be89-73e3a16313d9",
+      "key": "arrival-0",
+      "sha256": "0de235cb1ead0d75f5476617586680fc89f0795dc886a710e3eea23daf831258"
+    },
+    {
+      "pipeline_id": "17683037-f623-5442-9892-ef7e10285416",
+      "key": "arrival-1",
+      "sha256": "299dbebb8bc3bb62b30207bb9ff8cfa1b2ed08f089fa1ec957b4c77e5c63e3e0"
+    },
+    {
+      "pipeline_id": "0e92b93c-34c7-57fb-b7c6-027ee7fa1053",
+      "key": "arrival-2",
+      "sha256": "c064ea915ed6a99563d19ef87f6b8364c72f50b81dceef595471faf553caae09"
+    },
+    {
+      "pipeline_id": "c30b1cfe-c842-5aa6-9ecb-1568bffe91fb",
+      "key": "arrival-3",
+      "sha256": "6b0e96b62f16805a45fb4202abbc69e1d3cee8fe2b61880f5cb7b21a5396b3b2"
+    },
+    {
+      "pipeline_id": "adbcbe1b-3130-5cc3-b15f-ccbf9cb7ad6b",
+      "key": "arrival-4",
+      "sha256": "d9c2e0fa073522ead8b2fc5925e3abcc0bff2e9035352a7619b4c772e7a2c507"
+    },
+    {
+      "pipeline_id": "feb973fb-53c2-558c-be7d-e0bf5f2b6761",
+      "key": "arrival-5",
+      "sha256": "503bc8fbaa14a5a1e7125ed1e14fc525e855aeca9ec01633162a48eb9eab10d3"
+    },
+    {
+      "pipeline_id": "5b7f6099-697e-522b-9d8e-83392269397c",
+      "key": "arrival-6",
+      "sha256": "31c492aae9c59488d68cac1ded502bd4279cc59e3c151d225229f68c0aefc0bf"
+    },
+    {
+      "pipeline_id": "c6704c45-038a-5539-9bec-752e521e2c97",
+      "key": "arrival-7",
+      "sha256": "7ba43b6b4455ce9e649fbc6087b871f29269ccae9d1606744caffd64a9149936"
+    },
+    {
+      "pipeline_id": "94150b8e-ecf1-5cdc-a61e-aad8859ccb1b",
+      "key": "arrival-8",
+      "sha256": "bf7c57fa669a41e056ec0ba75f6624305e5a7afcdcdaee3fdb7b98f8b6c7b2f8"
+    },
+    {
+      "pipeline_id": "ca370d89-5d5b-5fec-8ab5-9a42cc413926",
+      "key": "arrival-9",
+      "sha256": "cd91ff11ea750154eac0153bc06dd98824708c6ce121398d5549ca0b981c139f"
+    },
+    {
+      "pipeline_id": "8aeaa997-9db6-519a-a62b-22edaf33eda3",
+      "key": "arrival-10",
+      "sha256": "080798d9c75ba986a45d60c584865badd2a29b20d5e66e8996cb2ee126919dd2"
+    },
+    {
+      "pipeline_id": "1fc92407-f245-5d8b-9053-00c485faffa3",
+      "key": "arrival-11",
+      "sha256": "27de168da19e431ee4e8cb3301af69470e21f0296ebfb92bcab2224e1651ff4c"
+    },
+    {
+      "pipeline_id": "b1fc4a54-3097-5809-8a07-d936360a219a",
+      "key": "arrival-12",
+      "sha256": "b7ee2c8a50d0c37a6c1cdbdd37a7f6b6c02ff33d5a3cf2b63afd537d4bf5604c"
+    },
+    {
+      "pipeline_id": "ed15fb33-0b98-5b87-80bf-c502be76ff0c",
+      "key": "arrival-13",
+      "sha256": "aa9a08cf929a163089981a911ecccbefa0d40a7d8ceb528634525f5c01a58c16"
+    },
+    {
+      "pipeline_id": "a8360f60-fd0a-54ee-91ec-34312f9e3339",
+      "key": "arrival-14",
+      "sha256": "810cc2cd4bb43304a66daed40fb215369d219ee1a7021567674840ba3d804e48"
+    },
+    {
+      "pipeline_id": "e15a3720-3388-5207-b7d7-9a15e7efa395",
+      "key": "arrival-15",
+      "sha256": "5c8a7a266da4b320ea9a49b15939951467f638efff8100cfb177c88cf2ac8e9a"
+    },
+    {
+      "pipeline_id": "5a767bfe-8dd3-5668-94ab-123dd18e77f5",
+      "key": "arrival-16",
+      "sha256": "c8520fb17e48517820374fac57bc5785b9b9ea5e3fb0178cd6dd3d791b23e656"
+    },
+    {
+      "pipeline_id": "a9020f15-f0ea-5ae9-a1b1-0d1f3add203c",
+      "key": "arrival-17",
+      "sha256": "7daddca5d355d44fc8efb7990af3298aa063bea40fe551e2ed12c73986d4e773"
+    },
+    {
+      "pipeline_id": "164a814c-2bcc-5034-b7ad-f26c0c6ffbce",
+      "key": "arrival-18",
+      "sha256": "142fd598886445a0c46e6ce5b6f2b78847df3c2b8f23c2a2f670f857db917be9"
+    }
+  ],
+  "limitations": [
+    "Synthetic blue worker, not a 60-pipeline native NiFi run.",
+    "Fixture fencing joins a local thread; no distributed fencing or production route switch.",
+    "Byte-preserving transfer with literal metadata, not arbitrary ETL.",
+    "At-least-once delivery; no zero downtime claim."
+  ],
+  "test_resources_cleaned_up": true,
+  "finalized_watermark_and_restart_guards_exercised": true
+}

@@ -17,6 +17,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 SCHEMA = 'flowbridge/continuous-s3/v1'
+FLEET_SCHEMA = 'flowbridge/continuous-s3-fleet/v1'
 MAX_OBJECT = 64 * 1024 * 1024
 
 class MigrationError(ValueError):
@@ -75,7 +76,7 @@ def _check_properties(properties, required, defaults):
         need(key in defaults and value == defaults[key], 'unsupported_processor_property')
 
 
-def analyze_nifi_s3(document):
+def analyze_nifi_s3(document, _fleet=False):
     report = {'ok': False, 'errors': [], 'warnings': []}
     try:
         need(isinstance(document, dict) and len(json.dumps(document)) <= 2_000_000, 'invalid_native_document')
@@ -93,7 +94,7 @@ def analyze_nifi_s3(document):
         need(not document.get('parameterContexts') and not document.get('parameterProviders') and not document.get('externalControllerServices'),'unsupported_external_configuration')
         need(not root.get('processors') and not root.get('connections'), 'root_must_only_contain_lanes')
         groups = root.get('processGroups', [])
-        need(len(groups) == 3, 'exactly_three_lanes_required')
+        need(1 <= len(groups) <= 256 if _fleet else len(groups) == 3, 'unsupported_lane_count')
         services = root.get('controllerServices', [])
         service_ids = set()
         for service in services:
@@ -148,11 +149,11 @@ def analyze_nifi_s3(document):
             need(isinstance(prefix,str) and not any(c in prefix for c in ('$','#','{','}')), 'literal_prefix_required')
             need((source['endpoint'], listing['Bucket']) != (destination['endpoint'], put['Bucket']), 'source_destination_feedback')
             lanes.append({'id':_id(group),'media_type':update['media_type'],'source':{**source,'bucket':listing['Bucket'],'prefix':prefix},'destination':{**destination,'bucket':put['Bucket']}})
-        need(len({lane['media_type'] for lane in lanes}) == 3, 'unique_media_lanes_required')
+        need(_fleet or len({lane['media_type'] for lane in lanes}) == 3, 'unique_media_lanes_required')
         source_locations={(lane['source']['endpoint'],lane['source']['bucket']) for lane in lanes}
         dest_locations={(lane['destination']['endpoint'],lane['destination']['bucket']) for lane in lanes}
-        need(len(source_locations)==3 and len(dest_locations)==3 and not source_locations & dest_locations,'cross_lane_feedback_or_overlap')
-        profile={'schema':SCHEMA,'lanes':lanes,'delivery':'at_least_once','maximum_object_bytes':MAX_OBJECT}
+        need(len(source_locations)==len(lanes) and len(dest_locations)==len(lanes) and not source_locations & dest_locations,'cross_lane_feedback_or_overlap')
+        profile={'schema':FLEET_SCHEMA if _fleet else SCHEMA,'lanes':lanes,'delivery':'at_least_once','maximum_object_bytes':MAX_OBJECT}
         report.update(ok=True,warnings=[{'code':'cutover_required','message':'Stop the NiFi source and drain its queues before establishing the target baseline. Producer arrivals may continue; missing destinations need explicit backfill approval. NiFi listing state is not copied.'},{'code':'bounded_semantics','message':'Latest objects only, byte-preserving keys, literal media_type processing and SHA256 audit. Deletions, historical versions, custom ACL/encryption/tags and arbitrary transformations are unsupported.'}])
         report.update(target='continuous-worker',native_version='2.12.0',runtime_validated=False)
         return {'report':report,'profile':profile,'migration_plan':{'source_state_imported':False,'source_stop_and_queue_drain_required':True,'producer_pause_required':False,'baseline':'Compare current source and destination bytes plus media_type metadata before checkpoint adoption.','backfill':'Missing or different destination objects require explicit overwrite/backfill approval.','ownership':'Only one target owner per persistent ledger; never run NiFi and target simultaneously.','rollback':'Stop target first, reconcile destination state and restore the saved NiFi configuration/state; rollback is not automatic.','limits':{'latest_objects_only':True,'max_objects_per_lane_per_poll':10000,'max_object_bytes':MAX_OBJECT,'deletions_propagated':False,'poll_retry_policy':'Failed objects are retried on subsequent scans; no success checkpoint is recorded.'}}}
@@ -170,13 +171,13 @@ def export_nifi_s3(document):
 
 def validate_profile(profile):
     need(isinstance(profile,dict) and set(profile)=={'schema','lanes','delivery','maximum_object_bytes'},'invalid_profile')
-    need(profile['schema']==SCHEMA and profile['delivery']=='at_least_once' and profile['maximum_object_bytes']==MAX_OBJECT,'invalid_profile')
-    need(isinstance(profile['lanes'],list) and len(profile['lanes'])==3,'invalid_profile')
+    need(profile['schema'] in (SCHEMA,FLEET_SCHEMA) and profile['delivery']=='at_least_once' and profile['maximum_object_bytes']==MAX_OBJECT,'invalid_profile')
+    need(isinstance(profile['lanes'],list) and (1<=len(profile['lanes'])<=256 if profile['schema']==FLEET_SCHEMA else len(profile['lanes'])==3),'invalid_profile')
     ids=set();kinds=set();sources=set();destinations=set()
     for lane in profile['lanes']:
         need(isinstance(lane,dict) and set(lane)=={'id','media_type','source','destination'},'invalid_profile_lane')
         need(isinstance(lane['id'],str) and re.fullmatch(r'[A-Za-z0-9-]{1,128}',lane['id']) and lane['id'] not in ids,'invalid_lane_identifier');ids.add(lane['id'])
-        need(lane['media_type'] in ('image','text','video') and lane['media_type'] not in kinds,'invalid_media_type');kinds.add(lane['media_type'])
+        need(lane['media_type'] in ('image','text','video') and (profile['schema']==FLEET_SCHEMA or lane['media_type'] not in kinds),'invalid_media_type');kinds.add(lane['media_type'])
         for side,locations in (('source',sources),('destination',destinations)):
             config=lane[side]
             need(isinstance(config,dict) and set(config)==({'endpoint','region','path_style_access','bucket','prefix'} if side=='source' else {'endpoint','region','path_style_access','bucket'}),'invalid_endpoint_profile')
@@ -249,6 +250,17 @@ class ContinuousS3Runner:
             except BlockingIOError:raise MigrationError('another_worker_owns_state') from None
             yield
         finally:os.close(descriptor)
+    def establish_shadow(self,production_profile):
+        validate_profile(production_profile)
+        expected={lane['id']:lane for lane in production_profile['lanes']}
+        need(set(expected)=={lane['id'] for lane in self.profile['lanes']},'shadow_lane_mismatch')
+        protected={lane[side]['bucket'] for lane in production_profile['lanes'] for side in ('source','destination')}
+        for lane in self.profile['lanes']:
+            need(lane['source']==expected[lane['id']]['source'] and lane['media_type']==expected[lane['id']]['media_type'],'shadow_source_or_transform_mismatch')
+            need(lane['destination']['bucket'] not in protected,'shadow_destination_overlaps_production')
+        with self.exclusive():
+            with self.db() as db:db.execute('UPDATE config SET ready=1')
+        return {'mode':'isolated_shadow','cutover':False}
     def establish_cutover(self,confirmed_source_stopped=False,backfill_existing=False):
         with self.exclusive():
             try:return self._establish_cutover(confirmed_source_stopped,backfill_existing)

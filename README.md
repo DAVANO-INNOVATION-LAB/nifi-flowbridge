@@ -38,13 +38,13 @@ Choose **Try tested native NiFi migration**, then **Assess full flow** and expor
 
 Cutover requires stopping NiFi listing, draining its queues, stopping its remaining processors, and reconciling destination bytes and metadata. Incoming files can continue accumulating in source storage. Explicitly approve backfill for objects that arrived during the handover, then start the generated worker. This does not transfer NiFi internal state or guarantee zero processing downtime. Historical versions, arbitrary transformations and custom storage policies are blocked.
 
-The repository’s silent demo video presents recorded integration evidence. The native example and complete evidence are available from the UI; this is a bounded native NiFi-to-worker migration, separate from the other target draft packages below.
+The repository’s silent demo video presents recorded integration evidence. The native example is available under Load a sample flow; evidence is saved in this repository; this is a bounded native NiFi-to-worker migration, separate from the other target draft packages below.
 
 ## Three-stream media ETL demonstration
 
 The repository includes a silent [migration evidence replay](web/demo.mp4) for the native NiFi handover described above. The separate media blueprint below demonstrates additional draft target packages.
 
-Choose **Try three-stream media ETL** in the UI. It loads three source buckets (images, text, video), separate destination buckets, Kafka reference-event topics and processing endpoints. The recorded evidence panel shows successful copies, retry recovery, deduplication, and deliberate terminal failures from isolated S3Mock/Kafka fixtures. No cloud account is required for the demonstration.
+Choose **Load a sample flow → Media ETL blueprint** in the UI. It loads three source buckets (images, text, video), separate destination buckets, Kafka reference-event topics and processing endpoints. The repository’s recorded evidence shows successful copies, retry recovery, deduplication, and deliberate terminal failures from isolated S3Mock/Kafka fixtures. No cloud account is required for the demonstration.
 
 The reference worker has a persistent SQLite ledger, version/ETag identity, leased jobs, acknowledged Kafka publication before copying, deterministic destination keys, processing completion records, bounded retries and dead-letter publication. It never deletes source objects. Objects are bounded to 64 MiB in this demonstration; media inspection extracts basic metadata, not transcoding or OCR. Kafka is a durable event journal; SQLite remains the work queue.
 
@@ -154,3 +154,11 @@ The generated Kafka project was compiled with Java 17 and Kafka Streams 3.9.2. I
 For a new processor or connector, contribute a synthetic fixture, mapping contract, reverse-import test, unsupported-setting tests, and target-runtime evidence. Do not open issues containing credentials or production flow exports.
 
 Apache project names identify compatibility targets; this project is independent of the Apache Software Foundation and is not endorsed by it. See [LICENSE](LICENSE).
+
+## Fleet assessment and blue-green controller
+
+The engineering workspace assesses nested NiFi estates, with a synthetic 60-pipeline example and per-pipeline blockers. Connected NiFi discovery walks up to 256 groups with bounded read-only requests; denied or incomplete scope never reports cutover readiness. The executable fleet profile is currently limited to independent NiFi 2.12 S3 List/Fetch/literal UpdateAttribute/Put lanes. Other processors, shared flow dependencies and stateful semantics remain blockers.
+
+The Python blue-green controller keeps isolated shadow outputs, compares blue/green results against recorded source versions, persists readiness, and requires a trusted fencing adapter before granting production writes. There is no browser-supplied ready flag or automatic rollback. A real S3Mock test exercised 60 pipelines and 79 objects, including a failed comparison, absent-fence refusal, synthetic blue-worker shutdown, later arrivals and restart. See [evidence](docs/fleet-evidence.json). The existing blue worker in that test was synthetic, not native NiFi, SeaTunnel, Camel K, Kafka or Airflow.
+
+Full native blue-green adapters for those five platforms are not yet delivered. Kafka's existing stopped-producer/consumer offset cutover is separate. Airflow is presently a bounded batch target. Locks protect one local plan/ledger; a production deployment also needs authoritative source fencing and coordination across plans and hosts. The controller currently exposes a Python interface, not an unattended native deployment service.

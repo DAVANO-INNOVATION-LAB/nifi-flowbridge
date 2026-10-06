@@ -4,6 +4,7 @@ import ipaddress
 import json
 import re
 import ssl
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -131,7 +132,8 @@ def _export_check(document):
                     if isinstance(descriptor, dict) and descriptor.get('sensitive') and props.get(key) not in (None, ''):
                         fail('sensitive_export', 'Export includes sensitive properties; prepare a credential-free definition at the source.')
             for key, item in value.items():
-                if _SECRET.search(key) and item not in (None, '', False, [], {}):
+                from ..graph import _public_credential_setting
+                if _SECRET.search(key) and item not in (None, '', False, [], {}) and not _public_credential_setting(key,item):
                     fail('sensitive_export', 'Export includes credential-like settings; prepare a credential-free definition at the source.')
                 walk(item, depth + 1)
         elif isinstance(value, list):
@@ -152,6 +154,42 @@ class NiFiClient:
         if not isinstance(document.get('flowContents'), dict):
             fail('invalid_response', 'NiFi did not return a flow definition.')
         return _export_check(document)
+
+    def discover(self, group_id='root'):
+        """Read the hierarchy in bounded calls; denied or truncated scope stays blocked."""
+        from ..fleet import discover_fleet
+        pending=[(_identifier(group_id),[])];seen=set();groups=[];errors=[];deadline=time.monotonic()+60
+        while pending and len(seen)<256 and time.monotonic()<deadline:
+            gid,parent=pending.pop(0)
+            if gid in seen:
+                errors.append({'group_id':gid,'code':'duplicate_group_reference'});continue
+            seen.add(gid)
+            try:
+                data=self.client.request('GET',f'/flow/process-groups/{gid}')
+                entity=data.get('processGroupFlow',{});flow=entity.get('flow')
+                if not isinstance(flow,dict):raise ValueError()
+                actual=_identifier(entity.get('id',gid))
+                breadcrumb=(entity.get('breadcrumb') or {}).get('breadcrumb') or {}
+                path=parent+[str(breadcrumb.get('name') or actual)]
+                processors=flow.get('processors') or [];children=flow.get('processGroups') or []
+                connections=flow.get('connections') or []
+                inbound={((c.get('component') or {}).get('destination') or {}).get('id') for c in connections}
+                entry={'id':actual,'path':path,'processors':len(processors),'connections':len(connections),'ingest_candidates':sum((p.get('component') or {}).get('id') not in inbound for p in processors),'assessment':None}
+                if any(flow.get(k) for k in ('inputPorts','outputPorts','remoteProcessGroups','funnels')) or (connections and not processors):
+                    errors.append({'group_id':actual,'code':'intergroup_or_port_dependencies_require_mapping'})
+                if processors:
+                    assessment=discover_fleet(self.export_flow(actual))
+                    entry['assessment']={k:assessment[k] for k in ('report','inventory','mapped','unmapped')}
+                    if not assessment['report']['ok']:errors.append({'group_id':actual,'code':'unmapped_workflow'})
+                    if children:errors.append({'group_id':actual,'code':'mixed_parent_workflow_requires_scope_review'})
+                groups.append(entry)
+                for child in children:
+                    component=child.get('component') or {}
+                    pending.append((_identifier(component.get('id') or child.get('id')),path))
+            except Exception:
+                errors.append({'group_id':gid,'code':'group_unreadable_or_unassessable'})
+        if pending:errors.append({'code':'discovery_limit_reached','remaining_groups':len(pending)})
+        return {'platform':'nifi','groups':groups,'group_count':len(groups),'workflow_count':sum(bool(g['processors']) for g in groups),'ingest_candidates':sum(g['ingest_candidates'] for g in groups),'complete':not pending and not any(e['code'] in ('group_unreadable_or_unassessable','duplicate_group_reference') for e in errors),'report':{'ok':not errors,'errors':errors,'warnings':[{'code':'snapshot_only','message':'Read-only discovery is a point-in-time inventory. It does not deploy green or authorize cutover.'}]},'cutover_ready':False}
 
     def inspect(self, group_id):
         group_id = _identifier(group_id)
