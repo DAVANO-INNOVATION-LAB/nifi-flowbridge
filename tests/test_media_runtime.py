@@ -66,3 +66,45 @@ class MediaRuntimeTests(unittest.TestCase):
   runner=self.runner();runner.discover();runner.run_once()
   self.s3.put_object(Bucket=self.lane['source']['bucket'],Key=self.lane['source']['prefix']+'hello.txt',Body=b'new version')
   self.assertEqual(runner.discover()['discovered'],1);self.assertEqual(runner.run_once()['counts']['complete'],2)
+
+class SeparateEndpointTests(unittest.TestCase):
+ setUp=MediaRuntimeTests.setUp
+ runner=MediaRuntimeTests.runner
+ def configure(self):
+  target=copy.deepcopy(self.blueprint['s3']);target['endpoint']='http://destination:9090'
+  for lane in self.blueprint['pipelines']:lane['destination']['s3']=copy.deepcopy(target)
+  self.destination=S3();self.calls=[]
+  def factory(config):
+   self.calls.append(config['endpoint'])
+   return self.destination if config['endpoint']==target['endpoint'] else self.s3
+  return factory
+ def test_separate_endpoints_copy_only_to_destination_and_restart_dedup(self):
+  factory=self.configure();source_before=copy.deepcopy(self.s3.objects)
+  runner=MediaRunner(self.blueprint,Path(self.temp.name)/'separate.db',client_factory=factory,publisher=lambda t,e:self.events.append(e))
+  self.assertEqual(len(self.calls),2);runner.discover();self.assertEqual(runner.run_once()['counts']['complete'],1)
+  self.assertEqual(self.s3.objects,source_before);self.assertEqual(len(self.destination.objects),2)
+  self.assertTrue(all(bucket==self.lane['destination']['bucket'] for bucket,key in self.destination.objects))
+  self.assertEqual(self.events[0]['destination']['endpoint'],'http://destination:9090')
+  restarted=MediaRunner(self.blueprint,Path(self.temp.name)/'separate.db',client_factory=factory)
+  self.assertEqual(restarted.discover()['discovered'],0)
+ def test_destination_outage_retries_without_source_writes(self):
+  factory=self.configure();before=copy.deepcopy(self.s3.objects)
+  def unavailable(**kwargs):raise RuntimeError('secret transport error')
+  self.destination.put_object=unavailable
+  runner=MediaRunner(self.blueprint,Path(self.temp.name)/'outage.db',client_factory=factory)
+  runner.discover();status=runner.run_once()
+  self.assertEqual(status['counts']['retry'],1);self.assertEqual(status['jobs'][0]['copied'],0)
+  self.assertEqual(self.s3.objects,before);self.assertNotIn('secret transport error',json.dumps(status))
+ def test_differing_endpoint_cannot_silently_use_single_client(self):
+  self.configure()
+  with self.assertRaisesRegex(MediaError,'requires_client_factory'):self.runner()
+ def test_endpoint_change_cannot_reuse_existing_state(self):
+  runner=self.runner();runner.discover();factory=self.configure()
+  with self.assertRaisesRegex(MediaError,'state_blueprint_mismatch'):
+   MediaRunner(self.blueprint,Path(self.temp.name)/'jobs.db',client_factory=factory)
+ def test_source_endpoint_changes_identity_even_for_same_bucket_key_etag(self):
+  first=self.runner();first.discover();old=first.status()['jobs'][0]['id']
+  for lane in self.blueprint['pipelines']:
+   lane['source']['s3']={**self.blueprint['s3'],'endpoint':'http://other-source:9090'}
+  second=MediaRunner(self.blueprint,Path(self.temp.name)/'new.db',client_factory=lambda cfg:self.s3)
+  second.discover();self.assertNotEqual(old,second.status()['jobs'][0]['id'])

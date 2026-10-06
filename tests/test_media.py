@@ -67,6 +67,12 @@ class MediaContractTests(unittest.TestCase):
  def test_artifacts_contain_license_and_review_documentation(self):
   files=export_nifi_media(self.blueprint)['files'];self.assertIn('Apache License',files['LICENSE']);self.assertIn('Known semantic gaps',files['README-NIFI-MEDIA.md'])
  def test_native_emission_deterministic(self):self.assertEqual(export_nifi_media(self.blueprint),export_nifi_media(self.blueprint))
+ def test_distinct_endpoint_validation_and_native_export_block(self):
+  self.blueprint['pipelines'][0]['destination']['s3']={**self.blueprint['s3'],'endpoint':'https://destination.example.test'}
+  self.assertTrue(validate_media(self.blueprint)['report']['ok'])
+  result=export_nifi_media(self.blueprint);self.assertFalse(result['report']['ok']);self.assertEqual(result['files'],{})
+  self.blueprint['pipelines'][0]['destination']['s3']['endpoint']='https://user:never-echo@destination.test'
+  result=validate_media(self.blueprint);self.assertFalse(result['report']['ok']);self.assertNotIn('never-echo',json.dumps(result))
  def test_nonmedia_native_document_not_claimed(self):
   for value in (None,{},[],{'flowContents':{'comments':'arbitrary'}}):self.assertFalse(import_nifi_media(value)['report']['ok'])
 

@@ -17,6 +17,13 @@ def blueprint():
 
 
 class MediaTargetTests(unittest.TestCase):
+    def test_distinct_endpoints_block_native_but_preserve_worker_packages(self):
+        data=blueprint();data['pipelines'][0]['destination']['s3']={**data['s3'],'endpoint':'https://other.example.test'}
+        for target in ('camel-k','seatunnel'):
+            result=export_media(data,target);self.assertFalse(result['report']['ok']);self.assertEqual(result['files'],{})
+        for target in ('airflow','kafka'):
+            result=export_media(data,target);self.assertTrue(result['report']['ok']);self.assertIn('client_factory',result['files']['flowbridge/media_runtime.py'])
+
     def test_airflow_exports_actual_three_lane_executor_dag(self):
         result=export_media(blueprint(),'airflow')
         self.assertTrue(result['report']['ok'],result['report'])

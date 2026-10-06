@@ -41,11 +41,22 @@ def inspect_media(job, content):
 
 
 class MediaRunner:
-    def __init__(self, blueprint, state_path, s3_client, processor=None, publisher=None, clock=time.time):
-        from .media import validate_media
+    def __init__(self, blueprint, state_path, s3_client=None, processor=None, publisher=None, clock=time.time, client_factory=None):
+        from .media import validate_media, s3_config
         validation=validate_media(blueprint)
         if not validation['report']['ok']:raise MediaError('invalid_blueprint')
         self.blueprint=validation['blueprint'];self.s3=s3_client;self.processor=processor or inspect_media;self.publisher=publisher;self.clock=clock
+        self.clients={}; cache={}
+        for lane in self.blueprint['pipelines']:
+            for side in ('source','destination'):
+                config=s3_config(self.blueprint,lane,side); key=json.dumps(config,sort_keys=True)
+                if key not in cache:
+                    if client_factory:
+                        try:cache[key]=client_factory(config)
+                        except Exception:raise MediaError('s3_client_creation_failed') from None
+                    elif s3_client is not None and config==self.blueprint['s3']:cache[key]=s3_client
+                    else:raise MediaError('distinct_s3_endpoint_requires_client_factory')
+                self.clients[(lane['id'],side)]=cache[key]
         self.path=Path(state_path);self.path.parent.mkdir(parents=True,exist_ok=True,mode=0o700)
         if self.path.is_symlink():raise MediaError('state_path_must_not_be_symlink')
         descriptor=os.open(self.path,os.O_CREAT|os.O_RDWR,0o600);os.close(descriptor)
@@ -54,6 +65,12 @@ class MediaRunner:
             db.executescript('''PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL;
             CREATE TABLE IF NOT EXISTS jobs(id TEXT PRIMARY KEY,lane TEXT,source_bucket TEXT,source_key TEXT,source_version TEXT,etag TEXT,destination_bucket TEXT,destination_key TEXT,media_type TEXT,state TEXT,attempts INTEGER DEFAULT 0,available REAL DEFAULT 0,lease REAL DEFAULT 0,published INTEGER DEFAULT 0,copied INTEGER DEFAULT 0,error TEXT,result TEXT,dlq_published INTEGER DEFAULT 0);
             ''')
+            db.execute('CREATE TABLE IF NOT EXISTS configuration (id INTEGER PRIMARY KEY, fingerprint TEXT NOT NULL)')
+            fingerprint=hashlib.sha256(json.dumps(self.blueprint,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+            previous=db.execute('SELECT fingerprint FROM configuration WHERE id=1').fetchone()
+            if not previous and any('s3' in lane[side] for lane in self.blueprint['pipelines'] for side in ('source','destination')) and db.execute('SELECT 1 FROM jobs LIMIT 1').fetchone():raise MediaError('legacy_state_endpoint_change_requires_new_ledger')
+            if previous and previous['fingerprint']!=fingerprint:raise MediaError('state_blueprint_mismatch')
+            db.execute('INSERT OR IGNORE INTO configuration(id,fingerprint) VALUES(1,?)',(fingerprint,))
         self.path.chmod(0o600)
     @contextmanager
     def db(self):
@@ -65,21 +82,24 @@ class MediaRunner:
         added=0; scanned=0
         for pipeline in self.pipelines.values():
             source=pipeline['source']; destination=pipeline['destination']; token=None
+            client=self.clients[(pipeline['id'],'source')]
             while True:
                 args={'Bucket':source['bucket'],'Prefix':source.get('prefix',''),'MaxKeys':1000}
                 if token:args['ContinuationToken']=token
-                try: page=self.s3.list_objects_v2(**args)
+                try: page=client.list_objects_v2(**args)
                 except Exception: raise MediaError('source_listing_failed') from None
                 for obj in page.get('Contents',[]):
                     scanned+=1
                     if scanned>10000:raise MediaError('discovery_limit')
                     key=obj['Key']
-                    try:head=self.s3.head_object(Bucket=source['bucket'],Key=key)
+                    try:head=client.head_object(Bucket=source['bucket'],Key=key)
                     except Exception:raise MediaError('source_head_failed') from None
                     version=head.get('VersionId');etag=head.get('ETag')
                     if not isinstance(etag,str):raise MediaError('source_identity_missing')
                     identity=[pipeline['id'],source['bucket'],key,version,etag]
-                    ident=hashlib.sha256(json.dumps(identity,separators=(',',':')).encode()).hexdigest()
+                    if 's3' in source or 's3' in destination:
+                        identity.extend([source.get('s3',self.blueprint['s3']),destination.get('s3',self.blueprint['s3'])])
+                    ident=hashlib.sha256(json.dumps(identity,separators=(',',':'),sort_keys=('s3' in source or 's3' in destination)).encode()).hexdigest()
                     relative=key[len(source.get('prefix','')):]
                     outkey=destination.get('prefix','')+ident+'/'+relative.lstrip('/')
                     with self.db() as db:
@@ -89,7 +109,7 @@ class MediaRunner:
                 if not token:raise MediaError('invalid_listing_page')
         return {'discovered':added,'scanned':scanned}
     def _event(self,job):
-        return {'schema':'flowbridge/media-event/v1','job_id':job['id'],'pipeline_id':job['lane'],'media_type':job['media_type'],'source':{'bucket':job['source_bucket'],'key':job['source_key'],'version':job['source_version'],'etag':job['etag']},'destination':{'bucket':job['destination_bucket'],'key':job['destination_key']}}
+        return {'schema':'flowbridge/media-event/v1','job_id':job['id'],'pipeline_id':job['lane'],'media_type':job['media_type'],'source':{'endpoint':self.pipelines[job['lane']]['source'].get('s3',self.blueprint['s3'])['endpoint'],'bucket':job['source_bucket'],'key':job['source_key'],'version':job['source_version'],'etag':job['etag']},'destination':{'endpoint':self.pipelines[job['lane']]['destination'].get('s3',self.blueprint['s3'])['endpoint'],'bucket':job['destination_bucket'],'key':job['destination_key']}}
     def _dlq(self,job):
         if not self.publisher:return
         event=self._event(job);event['error_code']=job['error'];event['attempts']=job['attempts']
@@ -118,7 +138,7 @@ class MediaRunner:
                     with self.db() as db:db.execute('UPDATE jobs SET published=1 WHERE id=?',(job['id'],))
                 get={'Bucket':job['source_bucket'],'Key':job['source_key'],'IfMatch':job['etag']}
                 if job['source_version']:get['VersionId']=job['source_version']
-                response=self.s3.get_object(**get)
+                response=self.clients[(job['lane'],'source')].get_object(**get)
                 body=response['Body']
                 try:
                     if response.get('ContentLength',0)>MAX_OBJECT:raise MediaError('object_too_large')
@@ -126,12 +146,12 @@ class MediaRunner:
                     if len(content)>MAX_OBJECT:raise MediaError('object_too_large')
                 finally:body.close()
                 if not job['copied']:
-                    self.s3.put_object(Bucket=job['destination_bucket'],Key=job['destination_key'],Body=content,Metadata={'flowbridge-job-id':job['id'],'source-etag':job['etag'].strip('"')},ContentType=response.get('ContentType','application/octet-stream'))
+                    self.clients[(job['lane'],'destination')].put_object(Bucket=job['destination_bucket'],Key=job['destination_key'],Body=content,Metadata={'flowbridge-job-id':job['id'],'source-etag':job['etag'].strip('"')},ContentType=response.get('ContentType','application/octet-stream'))
                     with self.db() as db:db.execute('UPDATE jobs SET copied=1 WHERE id=?',(job['id'],))
                 result=self.processor(job,content)
                 encoded=json.dumps(result,allow_nan=False)
                 if len(encoded.encode())>65536:raise MediaError('processing_result_too_large')
-                self.s3.put_object(Bucket=job['destination_bucket'],Key=job['destination_key']+'.flowbridge-result.json',Body=encoded.encode(),ContentType='application/json',Metadata={'flowbridge-job-id':job['id']})
+                self.clients[(job['lane'],'destination')].put_object(Bucket=job['destination_bucket'],Key=job['destination_key']+'.flowbridge-result.json',Body=encoded.encode(),ContentType='application/json',Metadata={'flowbridge-job-id':job['id']})
                 with self.db() as db:db.execute("UPDATE jobs SET state='complete',result=?,error=NULL,lease=0 WHERE id=?",(encoded,job['id']))
             except Exception as exc:
                 attempts=job['attempts']+1;limit=self.blueprint['delivery']['retries']+1
@@ -158,7 +178,9 @@ def execute_pipeline(blueprint,pipeline_id,state_path):
     from confluent_kafka import Producer
     selected=copy.deepcopy(blueprint)
     # Validate the complete three-lane contract before selecting a lane.
-    runner=MediaRunner(selected,state_path,boto3.client('s3',endpoint_url=selected['s3']['endpoint'],region_name=selected['s3']['region'],config=Config(signature_version='s3v4',s3={'addressing_style':'path' if selected['s3']['path_style_access'] else 'virtual'},connect_timeout=10,read_timeout=30,retries={'max_attempts':2})))
+    def client_factory(config):
+        return boto3.client('s3',endpoint_url=config['endpoint'],region_name=config['region'],config=Config(signature_version='s3v4',s3={'addressing_style':'path' if config['path_style_access'] else 'virtual'},connect_timeout=10,read_timeout=30,retries={'max_attempts':2}))
+    runner=MediaRunner(selected,state_path,client_factory=client_factory)
     if pipeline_id not in runner.pipelines:raise MediaError('unknown_pipeline')
     runner.pipelines={pipeline_id:runner.pipelines[pipeline_id]}
     # Only explicit local plaintext or TLS configurations are accepted by librdkafka.

@@ -1,0 +1,11 @@
+**
+!flowbridge
+!flowbridge/**
+!tests
+!tests/integration
+!tests/integration/media
+!tests/integration/media/fixtures
+!tests/integration/media/fixtures/**
+!tests/integration/airgap
+!tests/integration/airgap/**
+**/__pycache__

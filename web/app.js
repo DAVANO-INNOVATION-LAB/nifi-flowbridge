@@ -364,7 +364,10 @@ $('media-example-button').addEventListener('click', async () => {
     const targetResponse = await fetch('/api/demo/media/target-imports');
     const targets = targetResponse.ok ? await targetResponse.json() : null;
     if (targets?.camel?.status === 'passed') $('media-proof-summary').textContent += ' Camel: three routes loaded without starting them. SeaTunnel: syntax checked only; runtime import remains unverified.';
-    $('media-evidence').textContent=JSON.stringify({reference_execution:evidence,native_import:native,target_imports:targets},null,2);
+    const offlineResponse = await fetch('/api/demo/airgap/evidence');
+    const offline = offlineResponse.ok ? await offlineResponse.json() : null;
+    if (offline?.result === 'passed') $('media-proof-summary').textContent += ' Separate offline test: two storage endpoints, four completed jobs, one retained failure, six Kafka events; public TCP probes blocked. Physical air-gap certification is outside this test.';
+    $('media-evidence').textContent=JSON.stringify({reference_execution:evidence,native_import:native,target_imports:targets,offline_test:offline},null,2);
     status('Media blueprint loaded. Choose a target and review its mapping coverage. Partial targets require the incomplete-package acknowledgement.');
   } catch (error) { status(error.message,true); }
   finally {setBusy(false);}

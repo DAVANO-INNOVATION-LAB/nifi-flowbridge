@@ -64,6 +64,8 @@ class Handler(BaseHTTPRequestHandler):
             return self.send(200, {"status": "ok", "version": "0.3.0", "mode": "local"})
         if path == "/api/example/media":
             return self.send(200, json.loads((ROOT / "examples" / "media-etl.json").read_text()))
+        if path == "/api/demo/airgap/evidence":
+            return self.send(200, json.loads((ROOT / "docs" / "airgap-evidence.json").read_text()))
         if path == "/api/demo/media/target-imports":
             return self.send(200, json.loads((ROOT / "docs" / "media-target-import-evidence.json").read_text()))
         if path == "/api/demo/media/native-import":

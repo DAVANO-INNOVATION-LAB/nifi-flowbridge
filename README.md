@@ -24,6 +24,10 @@ docker compose up --build -d
 
 The container runs without root, with a read-only filesystem, dropped capabilities, a 256 MiB memory limit, and a port bound to localhost. File-only conversion makes no external calls. Opt-in connected mode contacts the broker or platform endpoints you supply. Connected actions require an owner token; the static UI and file converter do not provide a user login. Use an authenticated access layer for shared exposure.
 
+## Offline and private-network operation
+
+The workbench uses local assets and needs no cloud account or CDN. Preload the application and media-worker images before disconnecting; the offline deployment refuses image pulls. See [offline operating instructions](docs/airgap-operations.txt) for image transfer, private endpoints, CA trust, persistence and scope limits. Isolated integration evidence is recorded separately from physical air-gap assurance.
+
 ## Three-stream media ETL demonstration
 
 Choose **Try three-stream media ETL** in the UI. It loads three source buckets (images, text, video), separate destination buckets, Kafka reference-event topics and processing endpoints. The recorded evidence panel shows successful copies, retry recovery, deduplication, and deliberate terminal failures from isolated S3Mock/Kafka fixtures. No cloud account is required for the demonstration.

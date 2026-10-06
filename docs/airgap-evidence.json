@@ -1,0 +1,140 @@
+{
+  "schema": "flowbridge/airgap-evidence/v1",
+  "recorded_at": "2026-10-06T22:02:35.191490+00:00",
+  "evidence_type": "recorded_local_synthetic_container_integration",
+  "result": "passed",
+  "current_production_status": false,
+  "versions": {
+    "s3mock": "5.1.0",
+    "apache_kafka": "4.2.0",
+    "boto3": "1.42.49",
+    "confluent_kafka": "2.15.1"
+  },
+  "docker_inspection": {
+    "network": "flowbridge-airgap_default",
+    "internal": true,
+    "source_s3_port_bindings": {},
+    "target_s3_port_bindings": {},
+    "kafka_port_bindings": {},
+    "test_services_memory_bytes": [
+      536870912,
+      536870912,
+      805306368
+    ],
+    "runner_memory_bytes": 402653184
+  },
+  "integration_proof": {
+    "result": "passed",
+    "external_tcp_probes_blocked": [
+      "1.1.1.1",
+      "8.8.8.8"
+    ],
+    "internal_s3_endpoints": 2,
+    "source_buckets": 3,
+    "destination_buckets": 3,
+    "completed": 4,
+    "dead_letter": 1,
+    "kafka_events_consumed": 6,
+    "worker_process_starts": 4,
+    "persistent_ledger_reused": true,
+    "http_503_recovered": true,
+    "simulated_publisher_failure_recovered": true,
+    "offline_assessment": true,
+    "offline_packages": {
+      "nifi": {
+        "generated": true,
+        "reimported": true,
+        "ready": false,
+        "native_runtime_executed": false,
+        "distinct_endpoint_blocked": true,
+        "package_scope": "single_endpoint_fixture"
+      },
+      "kafka": {
+        "generated": true,
+        "reimported": true,
+        "ready": false,
+        "native_runtime_executed": false,
+        "distinct_endpoint_blocked": false,
+        "package_scope": "two_endpoint_fixture"
+      },
+      "airflow": {
+        "generated": true,
+        "reimported": true,
+        "ready": false,
+        "native_runtime_executed": false,
+        "distinct_endpoint_blocked": false,
+        "package_scope": "two_endpoint_fixture"
+      },
+      "camel-k": {
+        "generated": true,
+        "reimported": true,
+        "ready": false,
+        "native_runtime_executed": false,
+        "distinct_endpoint_blocked": true,
+        "package_scope": "single_endpoint_fixture"
+      },
+      "seatunnel": {
+        "generated": true,
+        "reimported": true,
+        "ready": false,
+        "native_runtime_executed": false,
+        "distinct_endpoint_blocked": true,
+        "package_scope": "single_endpoint_fixture"
+      }
+    },
+    "runtime_dependency_downloads": false,
+    "tls_verified": false,
+    "production_airgap_certification": false
+  },
+  "network_none_application_proof": {
+    "result": "passed",
+    "network_mode": "none",
+    "service_assessment": true,
+    "service_export_reimport_targets": {
+      "nifi": {
+        "exported": true,
+        "own_package_reimported": true,
+        "native_etl_executed": false
+      },
+      "kafka": {
+        "exported": true,
+        "own_package_reimported": true,
+        "native_etl_executed": false
+      },
+      "airflow": {
+        "exported": true,
+        "own_package_reimported": true,
+        "native_etl_executed": false
+      },
+      "camel-k": {
+        "exported": true,
+        "own_package_reimported": true,
+        "native_etl_executed": false
+      },
+      "seatunnel": {
+        "exported": true,
+        "own_package_reimported": true,
+        "native_etl_executed": false
+      }
+    },
+    "source_scope": "single_endpoint_synthetic_blueprint",
+    "external_tcp_probes_blocked": 2,
+    "dependency_downloads": false
+  },
+  "test_entrypoints": [
+    "tests/integration/airgap/smoke.py",
+    "tests/integration/airgap/offline_app.py"
+  ],
+  "reproduction": "tests/integration/airgap/README.txt",
+  "limitations": [
+    "Physical airgap and production network policy are not certified; trusted Docker host may have network access",
+    "Two public TCP destinations failed; DNS leakage and all egress paths are not audited",
+    "S3Mock and plaintext private test connections do not establish production S3/TLS/IAM behavior",
+    "Four subprocess starts test persisted ledger reuse, not host power failure or container restart",
+    "Local injected processor callback exercises real HTTP503, not production HTTPS/authentication",
+    "Publisher outage is injected, not a broker crash",
+    "SQLite is the authoritative work queue; Kafka is the event journal",
+    "Single-endpoint native packages are only generated/reimported; differing native endpoint mappings fail closed",
+    "No native target ETL executed; no arbitrary protocol equivalence or exactly-once guarantee"
+  ]
+}

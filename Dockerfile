@@ -19,3 +19,4 @@ EXPOSE 8790
 CMD ["python", "-m", "flowbridge", "serve", "--host", "0.0.0.0"]
 
 COPY docs/media-target-import-evidence.json /app/docs/media-target-import-evidence.json
+COPY docs/airgap-evidence.json /app/docs/airgap-evidence.json

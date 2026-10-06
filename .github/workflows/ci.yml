@@ -110,3 +110,25 @@ jobs:
       - run: PYTHONPATH=. python tests/integration/media/target_imports/generate_fixtures.py
       - run: mvn -B compile exec:java -Dexec.mainClass=NativeImportProof -Dexec.args=fixtures
         working-directory: tests/integration/media/target_imports
+  offline-airgap:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t nifi-flowbridge-flowbridge:latest .
+      - run: docker build -f tests/integration/media/Dockerfile -t flowbridge-media-smoke:local .
+      - run: docker compose -f tests/integration/airgap/compose.yaml pull
+      - run: docker build --network none --pull=false -f tests/integration/airgap/Dockerfile -t flowbridge-airgap-smoke:ci .
+      - run: docker compose -f tests/integration/airgap/compose.yaml up -d --pull never
+      - run: >-
+          docker run --rm --pull never --network flowbridge-airgap_default
+          --read-only --tmpfs /tmp:rw,nosuid,nodev,size=64m --cap-drop ALL
+          --security-opt no-new-privileges --memory 384m --cpus 1
+          flowbridge-airgap-smoke:ci
+      - run: >-
+          docker run --rm --pull never --network none
+          --read-only --tmpfs /tmp:rw,nosuid,nodev,size=64m --cap-drop ALL
+          --security-opt no-new-privileges --memory 384m --cpus 1
+          --entrypoint python flowbridge-airgap-smoke:ci /airgap/offline_app.py
+      - if: always()
+        run: docker compose -f tests/integration/airgap/compose.yaml down

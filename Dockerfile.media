@@ -1,0 +1,9 @@
+# Build on a connected staging machine, then transfer the completed image.
+# The offline host must not invoke pip or this build.
+ARG FLOWBRIDGE_BASE=nifi-flowbridge-flowbridge:latest
+FROM ${FLOWBRIDGE_BASE}
+USER root
+RUN pip install --no-cache-dir -r /app/requirements-media.txt
+USER 65532:0
+ENTRYPOINT ["python", "-m", "flowbridge.media_runtime"]
+CMD ["--help"]

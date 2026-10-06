@@ -1,0 +1,36 @@
+FLOWBRIDGE — OFFLINE AND AIR-GAP OPERATIONS
+
+Scope
+The local workbench serves its own UI assets and performs assessment/export/package reimport locally. It requires no account, AI service or CDN. Optional connected migration and media workers need access to the explicitly configured source, destination, broker and processing services. Those services must all exist inside the private environment; a public AWS S3 endpoint cannot be reached across a physical air gap.
+
+A Docker internal network is an integration-test boundary, not certification of a physically isolated installation. Enforce the real network boundary at the host/network layer, control DNS and proxy routes, and audit credential-provider behavior. Do not infer universal offline support for every native target or third-party connector from these tests.
+
+Prepare on a connected staging machine, for the OFFLINE HOST'S architecture:
+  docker build -t flowbridge-workbench:airgap .
+  docker build -f Dockerfile.media --build-arg FLOWBRIDGE_BASE=flowbridge-workbench:airgap -t flowbridge-media-worker:airgap .
+  docker image inspect flowbridge-workbench:airgap flowbridge-media-worker:airgap > images.json
+  docker save -o flowbridge-images.tar flowbridge-workbench:airgap flowbridge-media-worker:airgap
+  shasum -a 256 flowbridge-images.tar > flowbridge-images.tar.sha256
+
+Transfer images.tar, its checksum and images.json using your approved removable-media/artifact process. Also transfer the blueprint, generated packages, deployment file, licenses and all target-specific runtime/plugin images you intend to run. A checksum detects changed bytes; it is not proof of trusted origin. Review and scan the build before transfer. Store credentials separately.
+
+On the offline host:
+  shasum -a 256 -c flowbridge-images.tar.sha256
+  docker load -i flowbridge-images.tar
+  docker compose -f deployment/compose.airgap.yaml config
+  docker compose -f deployment/compose.airgap.yaml up -d --wait
+
+Open http://127.0.0.1:8791/ on that host. The offline compose file uses preloaded images with pull_policy: never and no build step. It creates an internal network and does not modify the normal localhost:8790 deployment. Missing images must fail, not silently pull. Docker Engine/Compose must already be installed offline.
+
+Media workers
+Preinstall requirements using Dockerfile.media while connected. Do not run pip on the offline host. Mount an approved blueprint read-only and a writable persistent ledger directory owned by the worker UID 65532. Run the media worker with --blueprint /config/media-etl.json --pipeline image --state /data/image.db --watch; run equivalent workers for text/video. Keep ledgers separate. Attach workers only to a network that can reach approved private endpoints. A Docker internal network cannot generally reach private services outside that network; adapt topology and host egress rules deliberately.
+
+The top-level s3 configuration remains the default. A source or destination can override it using a complete s3 object with endpoint, region and path_style_access. This lets the reference worker read one S3-compatible service and write another. It does not provide arbitrary SQL/filesystem/HDFS adapters. Native NiFi/Camel/SeaTunnel exports reject unsupported endpoint overrides rather than silently sending traffic to the wrong service.
+
+Use private DNS names and private CA trust. For boto3 configure AWS_CA_BUNDLE; for HTTPS processing use a trusted system CA or SSL_CERT_FILE; for Kafka configure the allowed SSL settings in FLOWBRIDGE_KAFKA_CONFIG. Do not disable verification in production. Public identity services, instance metadata, token refresh and proxies can introduce network dependencies: provide a deliberately configured offline-compatible credential source and set AWS_EC2_METADATA_DISABLED=true when instance metadata is not available. Distinct endpoint selection is supported, but the packaged default executor currently uses the same AWS credential-provider chain for its clients. Separate per-endpoint credential profiles are not implemented.
+
+State and recovery
+The SQLite ledger is authoritative work state; Kafka is an acknowledged event journal. Preserve the ledger, broker data and object storage across container replacement. Do not delete a ledger to resolve failures. Delivery is at least once: an external processing engine must honor the Idempotency-Key to avoid repeated side effects. The reference worker is bounded to 64MiB objects and basic metadata inspection. Native NiFi repository migration, arbitrary queued FlowFile transfer, production failover and universal target equivalence are not provided.
+
+Evidence
+Read docs/airgap-evidence.json after running the reproducible integration test in tests/integration/airgap/. Its exact conditions, versions, failures and limitations define the verified claim. Offline build reproducibility, cross-architecture emulation, hardware/network accreditation and third-party native target execution are separate validation tasks.

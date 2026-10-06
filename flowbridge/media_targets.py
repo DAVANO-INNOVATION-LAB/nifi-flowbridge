@@ -78,6 +78,9 @@ def export_media(data,target):
     if not checked['report']['ok']:
         return {'report':checked['report'],'files':{}}
     if target in ('seatunnel','camel-k'):
+        from .media import s3_config
+        if any(s3_config(data,lane,side)!=data['s3'] for lane in data['pipelines'] for side in ('source','destination')):
+            return _block(target,'Native media drafts do not support distinct S3 endpoint settings; use the reference worker.','media.multiple_s3_endpoints_unsupported')
         return _native_draft(checked['blueprint'],target,checked['report'])
     if target not in ('airflow','kafka'):
         return _block(target,'Choose a supported media package target.', 'media.target')

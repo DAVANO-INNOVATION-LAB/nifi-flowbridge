@@ -54,6 +54,17 @@ def _safe(value,depth=0):
     else:_require(value is None or isinstance(value,(bool,int)),'Media blueprints accept JSON scalar values only.')
 
 
+def s3_config(blueprint, lane, side):
+    """Effective public endpoint settings; credentials never belong here."""
+    return copy.deepcopy(lane[side].get('s3', blueprint['s3']))
+
+
+def _validate_s3(s3):
+    _exact(s3,('endpoint','region','path_style_access'));_url(s3['endpoint'])
+    _require(isinstance(s3['region'],str) and re.fullmatch(r'[a-z0-9-]{1,64}',s3['region']),'S3 region is invalid.')
+    _require(type(s3['path_style_access']) is bool,'S3 path_style_access must be a boolean.')
+
+
 def validate_media(document):
     report={'ok':False,'errors':[],'warnings':[]}
     try:
@@ -61,9 +72,7 @@ def validate_media(document):
         _exact(document,('schema','name','s3','kafka','delivery','pipelines'))
         _require(document['schema']==SCHEMA,'Unsupported media blueprint schema.')
         _require(isinstance(document['name'],str) and _NAME.fullmatch(document['name']),'Blueprint name must be a lowercase DNS-style name.')
-        s3=document['s3'];_exact(s3,('endpoint','region','path_style_access'));_url(s3['endpoint'])
-        _require(isinstance(s3['region'],str) and re.fullmatch(r'[a-z0-9-]{1,64}',s3['region']),'S3 region is invalid.')
-        _require(type(s3['path_style_access']) is bool,'S3 path_style_access must be a boolean.')
+        s3=document['s3'];_validate_s3(s3)
         _exact(document['kafka'],('brokers',))
         brokers=document['kafka']['brokers']
         _require(isinstance(brokers,str) and len(brokers)<=2048 and all(re.fullmatch(r'(?:[A-Za-z0-9.-]+|\[[A-Fa-f0-9:]+\]):[0-9]{1,5}', part) and 0<int(part.rsplit(':',1)[1])<=65535 for part in brokers.split(',')), 'Kafka brokers must be a comma-separated host:port list.')
@@ -78,9 +87,10 @@ def validate_media(document):
             _require(isinstance(lane['id'],str) and _NAME.fullmatch(lane['id']) and lane['id'] not in ids,'Pipeline identifiers must be unique lowercase names.');ids.add(lane['id'])
             _require(lane['media_type'] in ('image','text','video') and lane['media_type'] not in media,'Provide one image, one text and one video pipeline.');media.add(lane['media_type'])
             for name,buckets in (('source',sources),('destination',destinations)):
-                spec=lane[name];_exact(spec,('bucket','prefix'))
+                spec=lane[name];_require(isinstance(spec,dict) and set(spec) in ({'bucket','prefix'},{'bucket','prefix','s3'}),'Bucket settings accept bucket, prefix and optional s3 connection settings only.')
+                if 's3' in spec:_validate_s3(spec['s3'])
                 bucket=spec['bucket']
-                _require(isinstance(bucket,str) and _BUCKET.fullmatch(bucket) and '..' not in bucket and not re.fullmatch(r'\d+\.\d+\.\d+\.\d+',bucket) and bucket not in buckets,'All three source buckets and all three destination buckets must be distinct valid S3 bucket names.');buckets.add(bucket)
+                _require(isinstance(bucket,str) and _BUCKET.fullmatch(bucket) and '..' not in bucket and not re.fullmatch(r'\d+\.\d+\.\d+\.\d+',bucket) and (s3_config(document,lane,name)['endpoint'],bucket) not in buckets,'All three source buckets and all three destination buckets must be distinct valid S3 bucket names.');buckets.add((s3_config(document,lane,name)['endpoint'],bucket))
                 prefix=spec['prefix']
                 _require(isinstance(prefix,str) and len(prefix)<=512 and (not prefix or re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9/_.-]*/?',prefix)) and '..' not in prefix,'Prefixes must be relative literal S3 key prefixes without traversal or expressions.')
             _exact(lane['stream'],('topic','dead_letter_topic'))
@@ -92,7 +102,7 @@ def validate_media(document):
         _require(not sources&destinations,'Source and destination bucket sets must be disjoint to prevent feedback and overwriting source objects.')
         report['ok']=True
         report['warnings']=[{'code':'at_least_once','message':'Cross-system transfer is at least once. Processing engines must enforce the supplied idempotency key; a crash after an external side effect can require reconciliation.'},{'code':'checkpoint_scope','message':'SQLite checkpoints belong to the reference worker; NiFi, Airflow and other platforms require their own durable runtime state. Checkpoints are not automatically interchangeable.'}]
-        if s3['endpoint'].startswith('http:') or any(p['processing']['url'].startswith('http:') for p in pipelines):
+        if any(s3_config(document,lane,side)['endpoint'].startswith('http:') for lane in pipelines for side in ('source','destination')) or any(p['processing']['url'].startswith('http:') for p in pipelines):
             report['warnings'].append({'code':'plaintext_endpoint','message':'Plain HTTP is configured. Use it only for an explicitly trusted local test network; configure HTTPS before production use.'})
         return {'report':report,'blueprint':copy.deepcopy(document)}
     except (_Invalid,TypeError,ValueError,KeyError,AttributeError) as exc:
@@ -159,6 +169,10 @@ def _native(blueprint):
 def export_nifi_media(document):
     result=validate_media(document);result['files']={}
     if not result['report']['ok']:return result
+    if any(s3_config(document,lane,side)!=document['s3'] for lane in document['pipelines'] for side in ('source','destination')):
+        result['report']['ok']=False
+        result['report']['errors'].append({'code':'native_multiple_s3_endpoints_unsupported','message':'Native NiFi media export does not yet support distinct S3 endpoint settings; use the reference worker. No native files were generated.'})
+        return result
     result['report'].update({'full_contract_supported':False,'target':'nifi','target_version':NIFI_VERSION,'ready':False,'runtime_validated':False,'generator_import_tested':'NiFi 2.12.0 fixture accepted; not execution proof','artifact_kind':'stopped_integration_template'})
     result['report']['warnings'] += [
         {'code':'native_configuration_required','message':'NiFi services and all processors are disabled. Configure AWS deployment identity, Kafka TLS/authentication, required topics, persistent NiFi repositories/state and the failure-review output ports before starting.'},
