@@ -15,15 +15,15 @@ kubectl --namespace flowbridge port-forward service/flowbridge-flowbridge 8790:8
 
 Open `http://localhost:8790`, then run `helm test flowbridge --namespace flowbridge` to check the in-cluster service connection. The test uses the application image, without downloading an additional diagnostic image.
 
-The default image reference is `ghcr.io/davano-innovation-lab/nifi-flowbridge:0.2.0`. A chart file does not establish that an image has been published. Before installation, verify that this tag is available from your cluster, or build and push the source to a registry you control:
+The default image reference is `ghcr.io/davano-innovation-lab/nifi-flowbridge:0.3.0`. A chart file does not establish that an image has been published. Before installation, verify that this tag is available from your cluster, or build and push the source to a registry you control:
 
 ```sh
-docker build -t YOUR_REGISTRY/nifi-flowbridge:0.2.0 .
-docker push YOUR_REGISTRY/nifi-flowbridge:0.2.0
+docker build -t YOUR_REGISTRY/nifi-flowbridge:0.3.0 .
+docker push YOUR_REGISTRY/nifi-flowbridge:0.3.0
 helm upgrade --install flowbridge charts/flowbridge \
   --namespace flowbridge --create-namespace \
   --set image.repository=YOUR_REGISTRY/nifi-flowbridge \
-  --set-string image.tag=0.2.0 --wait
+  --set-string image.tag=0.3.0 --wait
 ```
 
 Use a lowercase registry/repository name in place of `YOUR_REGISTRY`. For a private registry, set `imagePullSecrets` to existing Kubernetes secret names; never put registry credentials in chart values. For reproducible deployment, set `image.digest=sha256:...`, which takes precedence over the tag.
@@ -63,7 +63,7 @@ No privileged SCC or `anyuid` grant is needed by the chart's security design. By
 | `replicaCount` | `1` | Stateless replicas, 1–20; live migration requires exactly 1. |
 | `nameOverride`, `fullnameOverride` | empty | Override generated resource names. |
 | `image.repository` | `ghcr.io/davano-innovation-lab/nifi-flowbridge` | Application repository. |
-| `image.tag` | `0.2.0` | Application image tag. |
+| `image.tag` | `0.3.0` | Application image tag. |
 | `image.digest` | empty | Optional SHA-256 digest, overrides tag. |
 | `image.pullPolicy` | `IfNotPresent` | Kubernetes image pull policy. |
 | `imagePullSecrets` | `[]` | Existing registry pull secrets as `{name: secret-name}` entries. |

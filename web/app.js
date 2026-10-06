@@ -2,6 +2,8 @@
 const $ = id => document.getElementById(id);
 const MAX_BYTES = 2 * 1024 * 1024;
 const descriptions = {
+  airflow: "Generate a paused Airflow DAG for explicitly supported one-shot HTTP and transformation workflows. Streaming semantics and unmapped processors block export.",
+  "nifi-upgrade": "Prepare a review-only NiFi 1 to 2 rule plan. This does not produce a validated NiFi 2 flow or change your source.",
   seatunnel: 'Generate a SeaTunnel configuration for the supported flow, with deployment notes and a compatibility report.',
   'camel-k': 'Generate a Camel K integration for the supported flow. Review configuration before deploying to Kubernetes.',
   kafka: 'Generate a Kafka Streams project and an importable Flowbridge manifest. Kafka is the destination runtime, not a universal flow format.',
@@ -11,19 +13,20 @@ const descriptions = {
 let preparedRequest = null;
 let busy = false;
 function status(message, error = false) { $('status').textContent = message; $('status').classList.toggle('error', error); }
-function setBusy(value) { busy = value; for (const id of ['analyze-button', 'convert-button', 'example-button', 'clear-button']) $(id).disabled = value; $('download-button').disabled = value || !$('review-ack').checked || !preparedRequest; $('review-ack').disabled = value; $('source').disabled = value; $('target').disabled = value; $('document').readOnly = value; $('file-input').disabled = value; platformControls(); }
-function invalidate() { preparedRequest = null; $('review-ack').checked = false; $('download-button').disabled = true; $('artifacts').hidden = true; $('report').hidden = true; status($('document').value.trim() ? 'Flow added. Check the source or prepare an export.' : 'Add a flow to begin.'); }
+function setBusy(value) { busy = value; for (const id of ['analyze-button', 'convert-button', 'example-button', 'http-example-button', 'media-example-button', 'clear-button']) $(id).disabled = value; $('download-button').disabled = value || !$('review-ack').checked || !preparedRequest; $('review-ack').disabled = value; $('source').disabled = value; $('target').disabled = value; $('document').readOnly = value; $('file-input').disabled = value; platformControls(); }
+function invalidate() { preparedRequest = null; $('review-ack').checked = false; $('download-button').disabled = true; $('artifacts').hidden = true; $('report').hidden = true; $('graph-assessment').hidden = true; status($('document').value.trim() ? 'Flow added. Check the source or prepare an export.' : 'Add a flow to begin.'); }
 function requestBody() {
   const raw = $('document').value.trim();
   if (!raw) throw new Error('Add a JSON flow document first.');
   if (new TextEncoder().encode(raw).length > MAX_BYTES) throw new Error('This document exceeds the 2 MB limit.');
-  let document; try { document = JSON.parse(raw); } catch { throw new Error('This is not valid JSON. Check the document and try again.'); }
-  if (!document || typeof document !== 'object' || Array.isArray(document)) throw new Error('The flow document must be a JSON object.');
-  return { source: $('source').value, target: $('target').value, document };
+  let document; try { document = raw.startsWith('<') ? raw : JSON.parse(raw); } catch { throw new Error('This is not valid JSON or NiFi XML. Check the document and try again.'); }
+  if (!document || (typeof document !== 'object' && typeof document !== 'string') || Array.isArray(document)) throw new Error('The flow document must be a JSON object.');
+  return { source: $('source').value, target: $('target').value, document, nifi_version: $('nifi-version').value, allow_partial: $('partial-ack').checked, batch_contract: $('batch-contract').checked ? {mode:'one_shot',acknowledge_scheduling_change:true} : null };
 }
 async function jsonRequest(path, body) {
   const response = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
   const data = await response.json().catch(() => null);
+  if (!response.ok && body.allow_partial && data?.files && Object.keys(data.files).length) return data;
   if (!response.ok) { if (data?.report) showReport(data.report, path.endsWith('/analyze') ? 'source' : 'export'); throw new Error(errorMessage(data?.error) || (data?.report?.errors?.length ? 'Resolve the compatibility blockers shown below.' : `The request failed (${response.status}).`)); }
   if (!data) throw new Error('The local server returned an unreadable response.');
   return data;
@@ -58,11 +61,12 @@ async function run(mode) {
   invalidate(); setBusy(true);
   try {
     const body = requestBody(); status(mode === 'analyze' ? 'Checking the source…' : 'Checking compatibility and preparing your project…');
-    const data = await jsonRequest(`/api/${mode}`, body);
+    const data = await jsonRequest(`/api/${mode === 'analyze' ? 'assess' : mode}`, body);
+    if (data.assessment) showGraph(data);
     const errors = showReport(data.report || data, mode === 'analyze' ? 'source' : 'export');
-    if (errors) { status('Resolve the compatibility blockers before exporting.', true); return; }
+    if (errors) { if (body.allow_partial && showFiles(data.files)) { preparedRequest = body; status('Incomplete review package prepared. Blockers remain; this is not a successful migration.', true); } else status('Resolve the compatibility blockers before exporting.', true); return; }
     if (mode === 'convert') { if (!showFiles(data.files)) throw new Error('No project files were generated. Review the report.'); preparedRequest = body; status('Export prepared. Review the findings and generated files below.'); }
-    else status('Source checked. Prepare an export to check the selected destination.');
+    else status('Assessment complete. Review the inventory, then prepare an export to check executable mapping coverage.');
   } catch (error) { status(error.message || 'The request could not be completed.', true); }
   finally { setBusy(false); }
 }
@@ -70,13 +74,24 @@ async function loadFile(file) {
   if (busy || !file) return;
   invalidate();
   if (file.size > MAX_BYTES) { status('Choose a JSON file smaller than 2 MB.', true); return; }
-  try { $('document').value = await file.text(); $('file-detail').textContent = `${file.name} · ${(file.size / 1024).toFixed(1)} KB`; invalidate(); requestBody(); }
+  try {
+    if (file.name.toLowerCase().endsWith('.zip')) {
+      const response = await fetch('/api/import-package', {method:'POST',headers:{'Content-Type':'application/zip'},body:await file.arrayBuffer()});
+      const data = await response.json();
+      if (!response.ok || !data.blueprint) throw new Error(data.error || 'This media package could not be imported intact.');
+      $('document').value = JSON.stringify(data.blueprint,null,2); $('source').value='auto'; $('nifi-version').value='auto';
+      $('file-detail').textContent = file.name + ' · verified manifest import'; invalidate(); status('Media package imported back to its blueprint. Native runtime execution is a separate check.'); return;
+    }
+    $('document').value = await file.text(); $('file-detail').textContent = `${file.name} · ${(file.size / 1024).toFixed(1)} KB`; invalidate(); requestBody(); }
   catch (error) { status(error.message || 'The file could not be read.', true); }
 }
 $('file-input').addEventListener('change', event => loadFile(event.target.files[0]));
 $('document').addEventListener('input', invalidate);
 $('source').addEventListener('change', invalidate);
-$('target').addEventListener('change', () => { $('target-description').textContent = descriptions[$('target').value]; invalidate(); });
+$('nifi-version').addEventListener('change', invalidate);
+$('batch-contract').addEventListener('change', invalidate);
+$('partial-ack').addEventListener('change', invalidate);
+$('target').addEventListener('change', () => { $('target-description').textContent = descriptions[$('target').value]; $('batch-contract-label').hidden = $('target').value !== 'airflow'; invalidate(); });
 $('clear-button').addEventListener('click', () => { $('document').value = ''; $('file-input').value = ''; $('file-detail').textContent = 'Up to 2 MB · processed on this local server'; invalidate(); $('document').focus(); });
 $('analyze-button').addEventListener('click', () => run('analyze'));
 $('convert-button').addEventListener('click', () => run('convert'));
@@ -296,3 +311,61 @@ $('platform-kind').addEventListener('change', () => {
 });
 window.addEventListener('pagehide', () => { $('platform-bearer').value = ''; });
 platformControls();
+
+function showGraph(data) {
+  const analysis = data.assessment, graph = analysis.graph || {};
+  const processors = graph.processors || [], groups = graph.groups || [], connections = graph.connections || [];
+  $('graph-assessment').hidden = false;
+  $('graph-summary').textContent = `${processors.length} processors · ${groups.length} groups · ${connections.length} connections. Source version: ${JSON.stringify(analysis.source_version)}.`;
+  const body = $('graph-components'); body.replaceChildren();
+  for (const processor of processors) {
+    const row = document.createElement('tr');
+    for (const value of [processor.name || processor.id || processor.identifier, processor.type, processor.group_id || processor.group || processor.groupIdentifier || '—']) { const cell = document.createElement('td'); cell.textContent = typeof value === 'object' ? JSON.stringify(value) : String(value || '—'); row.append(cell); }
+    body.append(row);
+  }
+  $('graph-details').textContent = JSON.stringify({version:analysis.source_version,capabilities:analysis.capabilities,diagnostics:analysis.diagnostics,upgrade_plan:data.upgrade_plan}, null, 2);
+}
+
+$('http-example-button').addEventListener('click', async () => {
+  if (busy) return;
+  setBusy(true);
+  try {
+    const response = await fetch('/api/example/http');
+    if (!response.ok) throw new Error('The HTTP example is unavailable.');
+    $('document').value = JSON.stringify(await response.json(), null, 2);
+    $('source').value = 'nifi'; $('nifi-version').value = '2'; $('target').value = 'airflow';
+    $('target-description').textContent = descriptions.airflow; $('batch-contract-label').hidden = false; $('batch-contract').checked = false;
+    $('file-detail').textContent = 'Synthetic four-processor HTTPS ingestion example'; invalidate();
+    status('HTTP example loaded. Assess the full flow, then review and acknowledge batch scheduling before export.');
+  } catch (error) { status(error.message, true); }
+  finally { setBusy(false); }
+});
+
+$('media-example-button').addEventListener('click', async () => {
+  if (busy) return;
+  setBusy(true);
+  try {
+    const response = await fetch('/api/example/media');
+    if (!response.ok) throw new Error('The media example is unavailable.');
+    $('document').value = JSON.stringify(await response.json(),null,2);
+    $('source').value='auto'; $('nifi-version').value='auto'; $('target').value='nifi';
+    $('target-description').textContent='Generate the three-lane NiFi integration template. Review configuration and semantic gaps before attempting a native import.';
+    $('batch-contract-label').hidden=true; $('partial-ack').checked=false;
+    $('file-detail').textContent='Synthetic image, text and video ETL blueprint'; invalidate();
+    $('media-demo').hidden=false;
+    const proofResponse = await fetch('/api/demo/media/evidence');
+    if (!proofResponse.ok) throw new Error('The recorded demo evidence is unavailable.');
+    const evidence = await proofResponse.json();
+    $('media-proof-summary').textContent = `Recorded ${evidence.recorded_at}: ${evidence.proof.complete} completed jobs, ${evidence.proof.dead_letter} dead-letter records, ${evidence.proof.kafka_events_read_back} Kafka events verified.`;
+    for (const [id,values] of [['media-success',evidence.success_cases],['media-failures',evidence.failure_cases]]) { const list=$(id);list.replaceChildren();for (const value of values || []) {const item=document.createElement('li');item.textContent=value;list.append(item);} }
+    const nativeResponse = await fetch('/api/demo/media/native-import');
+    const native = nativeResponse.ok ? await nativeResponse.json() : null;
+    if (native?.native_import_executed) $('media-proof-summary').textContent += ` Native NiFi ${native.nifi_version}: ${native.processors.length} processors and ${native.connections} connections imported; ETL was not started.`;
+    const targetResponse = await fetch('/api/demo/media/target-imports');
+    const targets = targetResponse.ok ? await targetResponse.json() : null;
+    if (targets?.camel?.status === 'passed') $('media-proof-summary').textContent += ' Camel: three routes loaded without starting them. SeaTunnel: syntax checked only; runtime import remains unverified.';
+    $('media-evidence').textContent=JSON.stringify({reference_execution:evidence,native_import:native,target_imports:targets},null,2);
+    status('Media blueprint loaded. Choose a target and review its mapping coverage. Partial targets require the incomplete-package acknowledgement.');
+  } catch (error) { status(error.message,true); }
+  finally {setBusy(false);}
+});

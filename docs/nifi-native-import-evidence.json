@@ -1,0 +1,385 @@
+{
+  "result": "imported_stopped",
+  "nifi_version": "2.12.0",
+  "native_import_executed": true,
+  "native_etl_executed": false,
+  "validation_refreshed_while_stopped": true,
+  "final_processors_disabled": true,
+  "tls": "loopback certificate pinned; hostname check skipped only for isolated test",
+  "certificate_sha256": "4aabe7496c262d11dddfd2fb04d49f8a46434c41c08c8ee6c7a9ed62d2e1f356",
+  "root_export_schema": {
+    "externalControllerServices": {},
+    "parameterContexts": {},
+    "flowEncodingVersion": "1.0",
+    "parameterProviders": {},
+    "latest": false
+  },
+  "groups": 4,
+  "connections": 54,
+  "processors": [
+    {
+      "id": "ac5b3a28-715b-31be-b086-76d06d5e62e7",
+      "name": "Persist metadata to Kafka",
+      "type": "org.apache.nifi.kafka.processors.PublishKafka",
+      "state": "STOPPED",
+      "validationStatus": "INVALID",
+      "validationErrors": [
+        "'Kafka Connection Service' validated against '165b7890-9812-3806-641c-cf580613e833' is invalid because Controller Service with ID 165b7890-9812-3806-641c-cf580613e833 is disabled"
+      ]
+    },
+    {
+      "id": "676818ba-a2ca-3e9d-6816-45b8d4451771",
+      "name": "Create immutable object reference",
+      "type": "org.apache.nifi.processors.attributes.UpdateAttribute",
+      "state": "STOPPED",
+      "validationStatus": "VALID",
+      "validationErrors": []
+    },
+    {
+      "id": "9db635af-041e-3ee5-5cfe-be9b77f7df4e",
+      "name": "Fetch exact source version",
+      "type": "org.apache.nifi.processors.aws.s3.FetchS3Object",
+      "state": "STOPPED",
+      "validationStatus": "INVALID",
+      "validationErrors": [
+        "'AWS Credentials Provider Service' validated against '712fab90-ff99-33ca-fbd7-b6c58489698e' is invalid because Controller Service with ID 712fab90-ff99-33ca-fbd7-b6c58489698e is disabled"
+      ]
+    },
+    {
+      "id": "3e02d110-b0b3-35fd-8e3b-ae49307c8314",
+      "name": "Write destination object",
+      "type": "org.apache.nifi.processors.aws.s3.PutS3Object",
+      "state": "STOPPED",
+      "validationStatus": "INVALID",
+      "validationErrors": [
+        "'AWS Credentials Provider Service' validated against '712fab90-ff99-33ca-fbd7-b6c58489698e' is invalid because Controller Service with ID 712fab90-ff99-33ca-fbd7-b6c58489698e is disabled"
+      ]
+    },
+    {
+      "id": "fa57a2b2-fb1c-323c-97ba-e4b09ad77286",
+      "name": "Serialize failed object reference",
+      "type": "org.apache.nifi.processors.standard.AttributesToJSON",
+      "state": "STOPPED",
+      "validationStatus": "VALID",
+      "validationErrors": []
+    },
+    {
+      "id": "1fbdc855-2f06-3310-55c3-0ef4f19b0d95",
+      "name": "Consume durable object references",
+      "type": "org.apache.nifi.kafka.processors.ConsumeKafka",
+      "state": "STOPPED",
+      "validationStatus": "INVALID",
+      "validationErrors": [
+        "'Kafka Connection Service' validated against '165b7890-9812-3806-641c-cf580613e833' is invalid because Controller Service with ID 165b7890-9812-3806-641c-cf580613e833 is disabled"
+      ]
+    },
+    {
+      "id": "59560c45-2c2d-35a8-9a7c-c2d1e5dbacc9",
+      "name": "Restore object reference attributes",
+      "type": "org.apache.nifi.processors.standard.EvaluateJsonPath",
+      "state": "STOPPED",
+      "validationStatus": "VALID",
+      "validationErrors": []
+    },
+    {
+      "id": "e41e7dde-7c53-3859-8e9a-2d4772086e52",
+      "name": "List versioned source objects",
+      "type": "org.apache.nifi.processors.aws.s3.ListS3",
+      "state": "STOPPED",
+      "validationStatus": "INVALID",
+      "validationErrors": [
+        "'AWS Credentials Provider Service' validated against '712fab90-ff99-33ca-fbd7-b6c58489698e' is invalid because Controller Service with ID 712fab90-ff99-33ca-fbd7-b6c58489698e is disabled"
+      ]
+    },
+    {
+      "id": "a30bf312-dea6-38b4-cb10-74551406a638",
+      "name": "Submit destination reference to engine",
+      "type": "org.apache.nifi.processors.standard.InvokeHTTP",
+      "state": "STOPPED",
+      "validationStatus": "VALID",
+      "validationErrors": []
+    },
+    {
+      "id": "1fa5c906-bd53-31ec-06a8-8aba31a0f5ad",
+      "name": "Serialize object reference only",
+      "type": "org.apache.nifi.processors.standard.AttributesToJSON",
+      "state": "STOPPED",
+      "validationStatus": "VALID",
+      "validationErrors": []
+    },
+    {
+      "id": "e024970f-ca1d-3aae-6e98-21a9587da14f",
+      "name": "Publish failed reference to dead letter topic",
+      "type": "org.apache.nifi.kafka.processors.PublishKafka",
+      "state": "STOPPED",
+      "validationStatus": "INVALID",
+      "validationErrors": [
+        "'Kafka Connection Service' validated against '165b7890-9812-3806-641c-cf580613e833' is invalid because Controller Service with ID 165b7890-9812-3806-641c-cf580613e833 is disabled"
+      ]
+    },
+    {
+      "id": "d6e0c8e4-fe37-3688-605e-347fef3584d4",
+      "name": "Create processing engine reference",
+      "type": "org.apache.nifi.processors.standard.AttributesToJSON",
+      "state": "STOPPED",
+      "validationStatus": "VALID",
+      "validationErrors": []
+    },
+    {
+      "id": "62357874-3d88-3374-fa97-455cb487c82b",
+      "name": "List versioned source objects",
+      "type": "org.apache.nifi.processors.aws.s3.ListS3",
+      "state": "STOPPED",
+      "validationStatus": "INVALID",
+      "validationErrors": [
+        "'AWS Credentials Provider Service' validated against '712fab90-ff99-33ca-fbd7-b6c58489698e' is invalid because Controller Service with ID 712fab90-ff99-33ca-fbd7-b6c58489698e is disabled"
+      ]
+    },
+    {
+      "id": "a63141be-7912-397b-f491-afa320eb7199",
+      "name": "Write destination object",
+      "type": "org.apache.nifi.processors.aws.s3.PutS3Object",
+      "state": "STOPPED",
+      "validationStatus": "INVALID",
+      "validationErrors": [
+        "'AWS Credentials Provider Service' validated against '712fab90-ff99-33ca-fbd7-b6c58489698e' is invalid because Controller Service with ID 712fab90-ff99-33ca-fbd7-b6c58489698e is disabled"
+      ]
+    },
+    {
+      "id": "c534af6f-ff04-3267-a3a6-92c3c51bd7e9",
+      "name": "Restore object reference attributes",
+      "type": "org.apache.nifi.processors.standard.EvaluateJsonPath",
+      "state": "STOPPED",
+      "validationStatus": "VALID",
+      "validationErrors": []
+    },
+    {
+      "id": "894654c4-5ac5-38c1-b922-33d49e39967a",
+      "name": "Fetch exact source version",
+      "type": "org.apache.nifi.processors.aws.s3.FetchS3Object",
+      "state": "STOPPED",
+      "validationStatus": "INVALID",
+      "validationErrors": [
+        "'AWS Credentials Provider Service' validated against '712fab90-ff99-33ca-fbd7-b6c58489698e' is invalid because Controller Service with ID 712fab90-ff99-33ca-fbd7-b6c58489698e is disabled"
+      ]
+    },
+    {
+      "id": "0a4e2084-88c2-3f63-bfef-9c9b885d1eae",
+      "name": "Create immutable object reference",
+      "type": "org.apache.nifi.processors.attributes.UpdateAttribute",
+      "state": "STOPPED",
+      "validationStatus": "VALID",
+      "validationErrors": []
+    },
+    {
+      "id": "28370c4a-4c26-32b2-8429-3d0c066def4b",
+      "name": "Serialize failed object reference",
+      "type": "org.apache.nifi.processors.standard.AttributesToJSON",
+      "state": "STOPPED",
+      "validationStatus": "VALID",
+      "validationErrors": []
+    },
+    {
+      "id": "2d19bd7e-fd1b-31b2-a624-b8d23da52e17",
+      "name": "Consume durable object references",
+      "type": "org.apache.nifi.kafka.processors.ConsumeKafka",
+      "state": "STOPPED",
+      "validationStatus": "INVALID",
+      "validationErrors": [
+        "'Kafka Connection Service' validated against '165b7890-9812-3806-641c-cf580613e833' is invalid because Controller Service with ID 165b7890-9812-3806-641c-cf580613e833 is disabled"
+      ]
+    },
+    {
+      "id": "d43b9ba2-e164-3273-93b1-1bcde9e2dc58",
+      "name": "Serialize object reference only",
+      "type": "org.apache.nifi.processors.standard.AttributesToJSON",
+      "state": "STOPPED",
+      "validationStatus": "VALID",
+      "validationErrors": []
+    },
+    {
+      "id": "e0ff2c5e-ae6b-37dd-9d37-7e51396b6cc3",
+      "name": "Publish failed reference to dead letter topic",
+      "type": "org.apache.nifi.kafka.processors.PublishKafka",
+      "state": "STOPPED",
+      "validationStatus": "INVALID",
+      "validationErrors": [
+        "'Kafka Connection Service' validated against '165b7890-9812-3806-641c-cf580613e833' is invalid because Controller Service with ID 165b7890-9812-3806-641c-cf580613e833 is disabled"
+      ]
+    },
+    {
+      "id": "09c44538-7c92-32e1-d41f-02544c6dd202",
+      "name": "Submit destination reference to engine",
+      "type": "org.apache.nifi.processors.standard.InvokeHTTP",
+      "state": "STOPPED",
+      "validationStatus": "VALID",
+      "validationErrors": []
+    },
+    {
+      "id": "5b05a84e-b1f4-3d76-4414-0be802a3207d",
+      "name": "Create processing engine reference",
+      "type": "org.apache.nifi.processors.standard.AttributesToJSON",
+      "state": "STOPPED",
+      "validationStatus": "VALID",
+      "validationErrors": []
+    },
+    {
+      "id": "5300c978-b645-3b18-b540-e59f7e6bd0bf",
+      "name": "Persist metadata to Kafka",
+      "type": "org.apache.nifi.kafka.processors.PublishKafka",
+      "state": "STOPPED",
+      "validationStatus": "INVALID",
+      "validationErrors": [
+        "'Kafka Connection Service' validated against '165b7890-9812-3806-641c-cf580613e833' is invalid because Controller Service with ID 165b7890-9812-3806-641c-cf580613e833 is disabled"
+      ]
+    },
+    {
+      "id": "72d11f14-6d8f-3153-9f39-155d1d94fd13",
+      "name": "Fetch exact source version",
+      "type": "org.apache.nifi.processors.aws.s3.FetchS3Object",
+      "state": "STOPPED",
+      "validationStatus": "INVALID",
+      "validationErrors": [
+        "'AWS Credentials Provider Service' validated against '712fab90-ff99-33ca-fbd7-b6c58489698e' is invalid because Controller Service with ID 712fab90-ff99-33ca-fbd7-b6c58489698e is disabled"
+      ]
+    },
+    {
+      "id": "31a2a561-c4f6-3b43-9e42-aa2c21551135",
+      "name": "List versioned source objects",
+      "type": "org.apache.nifi.processors.aws.s3.ListS3",
+      "state": "STOPPED",
+      "validationStatus": "INVALID",
+      "validationErrors": [
+        "'AWS Credentials Provider Service' validated against '712fab90-ff99-33ca-fbd7-b6c58489698e' is invalid because Controller Service with ID 712fab90-ff99-33ca-fbd7-b6c58489698e is disabled"
+      ]
+    },
+    {
+      "id": "c37798d4-8629-3c57-6bc4-51c2fe072f14",
+      "name": "Serialize object reference only",
+      "type": "org.apache.nifi.processors.standard.AttributesToJSON",
+      "state": "STOPPED",
+      "validationStatus": "VALID",
+      "validationErrors": []
+    },
+    {
+      "id": "5217e2d6-7c3f-368e-d6d2-0556b7e442d0",
+      "name": "Restore object reference attributes",
+      "type": "org.apache.nifi.processors.standard.EvaluateJsonPath",
+      "state": "STOPPED",
+      "validationStatus": "VALID",
+      "validationErrors": []
+    },
+    {
+      "id": "9d7d1c00-ea9b-36e1-df12-584fc880e416",
+      "name": "Publish failed reference to dead letter topic",
+      "type": "org.apache.nifi.kafka.processors.PublishKafka",
+      "state": "STOPPED",
+      "validationStatus": "INVALID",
+      "validationErrors": [
+        "'Kafka Connection Service' validated against '165b7890-9812-3806-641c-cf580613e833' is invalid because Controller Service with ID 165b7890-9812-3806-641c-cf580613e833 is disabled"
+      ]
+    },
+    {
+      "id": "dbec015a-1af7-32cc-2202-9c43dbdece26",
+      "name": "Serialize failed object reference",
+      "type": "org.apache.nifi.processors.standard.AttributesToJSON",
+      "state": "STOPPED",
+      "validationStatus": "VALID",
+      "validationErrors": []
+    },
+    {
+      "id": "48b1a4ce-a475-3527-c984-b18da5948910",
+      "name": "Persist metadata to Kafka",
+      "type": "org.apache.nifi.kafka.processors.PublishKafka",
+      "state": "STOPPED",
+      "validationStatus": "INVALID",
+      "validationErrors": [
+        "'Kafka Connection Service' validated against '165b7890-9812-3806-641c-cf580613e833' is invalid because Controller Service with ID 165b7890-9812-3806-641c-cf580613e833 is disabled"
+      ]
+    },
+    {
+      "id": "95a1e084-362a-3e4d-e3a5-f218d7ec8bc0",
+      "name": "Create processing engine reference",
+      "type": "org.apache.nifi.processors.standard.AttributesToJSON",
+      "state": "STOPPED",
+      "validationStatus": "VALID",
+      "validationErrors": []
+    },
+    {
+      "id": "7a9707ba-14b5-3c9f-1ed7-85b9519f4378",
+      "name": "Create immutable object reference",
+      "type": "org.apache.nifi.processors.attributes.UpdateAttribute",
+      "state": "STOPPED",
+      "validationStatus": "VALID",
+      "validationErrors": []
+    },
+    {
+      "id": "558523ca-311f-3800-9879-391b513c987b",
+      "name": "Submit destination reference to engine",
+      "type": "org.apache.nifi.processors.standard.InvokeHTTP",
+      "state": "STOPPED",
+      "validationStatus": "VALID",
+      "validationErrors": []
+    },
+    {
+      "id": "8d9acfd3-6210-3f1a-ed5b-5329602560e7",
+      "name": "Consume durable object references",
+      "type": "org.apache.nifi.kafka.processors.ConsumeKafka",
+      "state": "STOPPED",
+      "validationStatus": "INVALID",
+      "validationErrors": [
+        "'Kafka Connection Service' validated against '165b7890-9812-3806-641c-cf580613e833' is invalid because Controller Service with ID 165b7890-9812-3806-641c-cf580613e833 is disabled"
+      ]
+    },
+    {
+      "id": "6ed5781f-d9d2-3db6-8da9-98ddbe7a4a81",
+      "name": "Write destination object",
+      "type": "org.apache.nifi.processors.aws.s3.PutS3Object",
+      "state": "STOPPED",
+      "validationStatus": "INVALID",
+      "validationErrors": [
+        "'AWS Credentials Provider Service' validated against '712fab90-ff99-33ca-fbd7-b6c58489698e' is invalid because Controller Service with ID 712fab90-ff99-33ca-fbd7-b6c58489698e is disabled"
+      ]
+    }
+  ],
+  "controller_services": [
+    {
+      "id": "712fab90-ff99-33ca-fbd7-b6c58489698e",
+      "name": "Configure AWS credentials through deployment identity",
+      "type": "org.apache.nifi.processors.aws.credentials.provider.service.AWSCredentialsProviderControllerService",
+      "state": "DISABLED",
+      "validationStatus": "VALID",
+      "validationErrors": []
+    },
+    {
+      "id": "165b7890-9812-3806-641c-cf580613e833",
+      "name": "Configure Kafka TLS and authentication before enabling",
+      "type": "org.apache.nifi.kafka.service.Kafka3ConnectionService",
+      "state": "DISABLED",
+      "validationStatus": "VALID",
+      "validationErrors": []
+    }
+  ],
+  "recorded_at": "2026-10-06T21:40:37.391127+00:00",
+  "fixture": "examples/media-etl.json",
+  "schema": "flowbridge/nifi-native-import-evidence/v1",
+  "native_import_attempted": true,
+  "generated_artifact_sha256": "f8d01183777e54cee4dd0334f5f74ceb125054ebb77743b9ea0e6d69ced5891b",
+  "image_digest": "sha256:6f7f2840dbf178c6dd3fa13435b9b358f3be3c6fb7417de467a35a267f4d28ad",
+  "resource_limits": {
+    "memory": "1GiB",
+    "java_heap": "512MiB",
+    "host_ports": 0
+  },
+  "validation_summary": {
+    "valid_processors": 18,
+    "invalid_processors": 18,
+    "invalid_reason": "Intentionally disabled AWS or Kafka controller service; 9 references each",
+    "valid_disabled_controller_services": 2,
+    "connections": 54
+  },
+  "limitations": [
+    "Native graph import and stopped validation are verified; ETL execution and semantic equivalence are not",
+    "AWS and Kafka services intentionally remain disabled; no external services connected"
+  ]
+}

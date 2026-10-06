@@ -3,7 +3,7 @@ nameOverride: ""
 fullnameOverride: ""
 image:
   repository: ghcr.io/davano-innovation-lab/nifi-flowbridge
-  tag: "0.2.0"
+  tag: "0.3.0"
   digest: ""
   pullPolicy: IfNotPresent
 imagePullSecrets: []

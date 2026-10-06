@@ -1,0 +1,82 @@
+{
+  "schema": "flowbridge/media-etl/v1",
+  "name": "media-etl-demo",
+  "s3": {
+    "endpoint": "http://s3mock:9090",
+    "region": "us-east-1",
+    "path_style_access": true
+  },
+  "kafka": {
+    "brokers": "kafka:9092"
+  },
+  "delivery": {
+    "checkpoint_backend": "sqlite",
+    "deduplication": "bucket-key-version-etag",
+    "retries": 3
+  },
+  "pipelines": [
+    {
+      "id": "images",
+      "media_type": "image",
+      "source": {
+        "bucket": "source-images",
+        "prefix": ""
+      },
+      "destination": {
+        "bucket": "destination-images",
+        "prefix": "processed/"
+      },
+      "stream": {
+        "topic": "media.images",
+        "dead_letter_topic": "media.images.dlq"
+      },
+      "processing": {
+        "engine": "http",
+        "url": "http://processing-engine:8080/process",
+        "method": "POST"
+      }
+    },
+    {
+      "id": "text",
+      "media_type": "text",
+      "source": {
+        "bucket": "source-text",
+        "prefix": ""
+      },
+      "destination": {
+        "bucket": "destination-text",
+        "prefix": "processed/"
+      },
+      "stream": {
+        "topic": "media.text",
+        "dead_letter_topic": "media.text.dlq"
+      },
+      "processing": {
+        "engine": "http",
+        "url": "http://processing-engine:8080/process",
+        "method": "POST"
+      }
+    },
+    {
+      "id": "videos",
+      "media_type": "video",
+      "source": {
+        "bucket": "source-videos",
+        "prefix": ""
+      },
+      "destination": {
+        "bucket": "destination-videos",
+        "prefix": "processed/"
+      },
+      "stream": {
+        "topic": "media.videos",
+        "dead_letter_topic": "media.videos.dlq"
+      },
+      "processing": {
+        "engine": "http",
+        "url": "http://processing-engine:8080/process",
+        "method": "POST"
+      }
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 name: Validate converters
-on: [push, pull_request]
+on: [push, pull_request, workflow_dispatch]
 permissions:
   contents: read
 jobs:
@@ -50,3 +50,63 @@ jobs:
           --entrypoint python flowbridge:ci - < tests/integration/kafka_smoke.py
       - if: always()
         run: docker compose -p flowbridge-integration -f tests/integration/compose.yaml down
+  airflow:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m flowbridge convert examples/nifi-http-airflow.json --target airflow --one-shot-batch --accept-warnings --output local-output/airflow
+      - run: >-
+          docker run --rm -i --network none --read-only
+          --tmpfs /tmp:rw,noexec,nosuid,size=128m --cap-drop ALL
+          --security-opt no-new-privileges:true --memory 768m --cpus 1
+          -e AIRFLOW_HOME=/tmp/airflow -e PYTHONDONTWRITEBYTECODE=1
+          -v "$PWD/local-output/airflow/dags:/opt/airflow/dags:ro"
+          --entrypoint python apache/airflow:3.1.8-python3.12 -
+          < tests/integration/airflow_smoke.py
+  media-integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t nifi-flowbridge-flowbridge:latest .
+      - run: docker compose -f tests/integration/media/compose.yaml up -d
+      - run: docker build -f tests/integration/media/Dockerfile -t flowbridge-media-smoke:ci .
+      - run: >-
+          docker run --rm --read-only --tmpfs /tmp:rw,nosuid,nodev,size=64m
+          --cap-drop ALL --security-opt no-new-privileges
+          --memory 384m --cpus 1 --network flowbridge-media_default
+          flowbridge-media-smoke:ci
+      - if: always()
+        run: docker compose -f tests/integration/media/compose.yaml down
+  nifi-native-import:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 tests/integration/media/nifi_import.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nifi-native-import-evidence
+          path: docs/nifi-native-import-evidence.json
+
+  native-target-parsers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - run: PYTHONPATH=. python tests/integration/media/target_imports/generate_fixtures.py
+      - run: mvn -B compile exec:java -Dexec.mainClass=NativeImportProof -Dexec.args=fixtures
+        working-directory: tests/integration/media/target_imports

@@ -5,7 +5,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlsplit
 
-from .io import MAX_BYTES, archive, read_document
+from .io import MAX_BYTES, archive, read_document, read_archive
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -61,10 +61,20 @@ class Handler(BaseHTTPRequestHandler):
                     return self.send(404, {"error": "Migration unavailable."})
             return self.send(404, {"error": "Not found"})
         if path == "/api/health":
-            return self.send(200, {"status": "ok", "version": "0.2.0", "mode": "local"})
+            return self.send(200, {"status": "ok", "version": "0.3.0", "mode": "local"})
+        if path == "/api/example/media":
+            return self.send(200, json.loads((ROOT / "examples" / "media-etl.json").read_text()))
+        if path == "/api/demo/media/target-imports":
+            return self.send(200, json.loads((ROOT / "docs" / "media-target-import-evidence.json").read_text()))
+        if path == "/api/demo/media/native-import":
+            return self.send(200, json.loads((ROOT / "docs" / "nifi-native-import-evidence.json").read_text()))
+        if path == "/api/demo/media/evidence":
+            return self.send(200, json.loads((ROOT / "docs" / "media-demo-evidence.json").read_text()))
+        if path == "/api/example/http":
+            return self.send(200, json.loads((ROOT / "examples" / "nifi-http-airflow.json").read_text()))
         if path == "/api/example":
             return self.send(200, {"schema": "flowbridge/v1", "name": "order-events", "source": {"type": "kafka", "brokers": "localhost:9092", "topic": "orders-in", "group": "flowbridge-orders", "offset": "earliest"}, "sink": {"type": "kafka", "brokers": "localhost:9092", "topic": "orders-out"}})
-        files = {"/": ("index.html", "text/html; charset=utf-8"), "/index.html": ("index.html", "text/html; charset=utf-8"), "/style.css": ("style.css", "text/css"), "/app.js": ("app.js", "text/javascript"), "/ui.js": ("ui.js", "text/javascript")}
+        files = {"/brand.svg": ("brand.svg", "image/svg+xml"), "/": ("index.html", "text/html; charset=utf-8"), "/index.html": ("index.html", "text/html; charset=utf-8"), "/style.css": ("style.css", "text/css"), "/app.js": ("app.js", "text/javascript"), "/ui.js": ("ui.js", "text/javascript")}
         if path not in files:
             return self.send(404, {"error": "Not found"})
         name, mime = files[path]
@@ -77,12 +87,27 @@ class Handler(BaseHTTPRequestHandler):
         if not self.valid_origin():
             return self.send(403, {"error": "Local origin required"})
         live = self.path.startswith("/api/live/")
-        if self.path not in ("/api/analyze", "/api/convert", "/api/download") and not live:
+        if self.path not in ("/api/analyze", "/api/assess", "/api/convert", "/api/download", "/api/import-package") and not live:
             return self.send(404, {"error": "Not found"})
         if live:
             from .live import api
             if not api.authorized(self.headers.get("Authorization")):
                 return self.send(401, {"error": "Live mode requires its owner access token and enabled server configuration."})
+        if self.path == "/api/import-package":
+            try:
+                length = int(self.headers.get("Content-Length", "-1"))
+                if not 0 < length <= MAX_BYTES: return self.send(413, {"error":"Package exceeds size limit"})
+                self.connection.settimeout(10)
+                files = read_archive(self.rfile.read(length))
+                if "nifi-media-flow.json" in files:
+                    from .media import import_nifi_media
+                    result = import_nifi_media(read_document(files["nifi-media-flow.json"].encode()))
+                else:
+                    from .media_targets import import_media_package
+                    result = import_media_package(files)
+                return self.send(200 if result["report"]["ok"] else 422, result)
+            except Exception:
+                return self.send(400, {"error":"Supply a bounded unchanged Flowbridge media ZIP package."})
         if self.headers.get("Content-Type", "").split(";")[0] != "application/json":
             return self.send(415, {"error": "Send application/json"})
         try:
@@ -109,11 +134,14 @@ class Handler(BaseHTTPRequestHandler):
             source = payload.get("source", "auto")
             target = payload.get("target", "flowbridge")
             formats = ("nifi", "seatunnel", "camel-k", "kafka", "flowbridge")
-            if not isinstance(source, str) or source not in ("auto",) + formats or not isinstance(target, str) or target not in formats:
+            if not isinstance(source, str) or source not in ("auto",) + formats or not isinstance(target, str) or target not in formats + ("airflow", "nifi-upgrade"):
                 raise ValueError("Unknown format")
-            from .service import analyze, convert
-            result = analyze(document, source) if self.path == "/api/analyze" else convert(document, source, target)
-            if self.path == "/api/download" and result["report"]["ok"]:
+            from .service import analyze, assess, convert
+            if self.path == "/api/assess":
+                result = assess(document, source, payload.get("nifi_version", "auto"))
+                return self.send(200, result)
+            result = analyze(document, source) if self.path == "/api/analyze" else convert(document, source, target, batch_contract=payload.get("batch_contract"), nifi_version=payload.get("nifi_version", "auto"))
+            if self.path == "/api/download" and (result["report"]["ok"] or (payload.get("allow_partial") is True and result.get("files"))):
                 return self.send(200, archive(result["files"]), "application/zip", True)
             return self.send(200 if result["report"]["ok"] else 422, result)
         except (ValueError, OSError, RecursionError, TypeError):

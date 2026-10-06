@@ -1,0 +1,36 @@
+name: flowbridge-media
+services:
+  s3:
+    image: adobe/s3mock:5.1.0
+    mem_limit: 768m
+    cpus: 1
+    environment:
+      JAVA_TOOL_OPTIONS: -Xms128m -Xmx384m
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+  kafka:
+    image: apache/kafka:4.2.0
+    hostname: kafka
+    mem_limit: 768m
+    cpus: 1
+    environment:
+      CLUSTER_ID: TXM3OEVBNTcwNTJENDM2Qk
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'false'
+      KAFKA_HEAP_OPTS: -Xms256m -Xmx256m
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+networks:
+  default:
+    internal: true

@@ -1,0 +1,115 @@
+{
+  "flowContents": {
+    "identifier": "http-batch-root",
+    "name": "Bounded HTTPS API ingestion",
+    "processors": [
+      {
+        "identifier": "fetch",
+        "name": "fetch",
+        "type": "org.apache.nifi.processors.standard.InvokeHTTP",
+        "bundle": {
+          "group": "org.apache.nifi",
+          "artifact": "nifi-standard-nar",
+          "version": "2.0.0"
+        },
+        "properties": {
+          "HTTP URL": "https://api.example.com/v1/items",
+          "HTTP Method": "GET",
+          "HTTP Redirects Enabled": "false"
+        },
+        "schedulingStrategy": "TIMER_DRIVEN",
+        "schedulingPeriod": "1 min"
+      },
+      {
+        "identifier": "tag",
+        "name": "tag",
+        "type": "org.apache.nifi.processors.attributes.UpdateAttribute",
+        "bundle": {
+          "group": "org.apache.nifi",
+          "artifact": "nifi-update-attribute-nar",
+          "version": "2.0.0"
+        },
+        "properties": {
+          "Store State": "Do not store state",
+          "source": "api"
+        },
+        "schedulingStrategy": "TIMER_DRIVEN",
+        "schedulingPeriod": "1 min"
+      },
+      {
+        "identifier": "replace",
+        "name": "replace",
+        "type": "org.apache.nifi.processors.standard.ReplaceText",
+        "bundle": {
+          "group": "org.apache.nifi",
+          "artifact": "nifi-standard-nar",
+          "version": "2.0.0"
+        },
+        "properties": {
+          "Evaluation Mode": "Entire text",
+          "Replacement Strategy": "Literal Replace",
+          "Search Value": "old",
+          "Replacement Value": "new"
+        },
+        "schedulingStrategy": "TIMER_DRIVEN",
+        "schedulingPeriod": "1 min"
+      },
+      {
+        "identifier": "tag-batch",
+        "name": "Tag batch output",
+        "type": "org.apache.nifi.processors.attributes.UpdateAttribute",
+        "bundle": {
+          "group": "org.apache.nifi",
+          "artifact": "nifi-update-attribute-nar",
+          "version": "2.0.0"
+        },
+        "properties": {
+          "Store State": "Do not store state",
+          "migration.mode": "one-shot-review"
+        },
+        "autoTerminatedRelationships": [
+          "success"
+        ]
+      }
+    ],
+    "connections": [
+      {
+        "identifier": "one",
+        "source": {
+          "id": "fetch"
+        },
+        "destination": {
+          "id": "tag"
+        },
+        "selectedRelationships": [
+          "Response"
+        ]
+      },
+      {
+        "identifier": "two",
+        "source": {
+          "id": "tag"
+        },
+        "destination": {
+          "id": "replace"
+        },
+        "selectedRelationships": [
+          "success"
+        ]
+      },
+      {
+        "identifier": "three",
+        "source": {
+          "id": "replace"
+        },
+        "destination": {
+          "id": "tag-batch"
+        },
+        "selectedRelationships": [
+          "success"
+        ]
+      }
+    ]
+  },
+  "parameterContexts": {}
+}

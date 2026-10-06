@@ -1,0 +1,56 @@
+{
+  "schema": "flowbridge/media-demo-evidence/v1",
+  "recorded_at": "2026-10-06T21:29:51.118866+00:00",
+  "evidence_type": "recorded_local_synthetic_integration",
+  "current_production_status": false,
+  "native_runtime_executed": false,
+  "system_versions": {
+    "s3mock": "5.1.0",
+    "apache_kafka": "4.2.0",
+    "python": "3.12",
+    "boto3": "1.42.49",
+    "confluent_kafka": "2.15.1"
+  },
+  "environment": {
+    "network": "isolated Docker internal network; no host ports",
+    "runner": "read-only, no capabilities, no-new-privileges, 384MiB limit",
+    "source_buckets": 3,
+    "destination_buckets": 3,
+    "real_cloud_accounts": false
+  },
+  "proof": {
+    "result": "passed",
+    "s3_fixture": "adobe/s3mock:5.1.0",
+    "kafka": "apache/kafka:4.2.0",
+    "source_buckets": 3,
+    "destination_buckets": 3,
+    "complete": 5,
+    "dead_letter": 3,
+    "kafka_events_read_back": 10,
+    "worker_restart": true,
+    "http_503_retry": true,
+    "broker_outage_retry": true,
+    "native_target_runtime_execution": false
+  },
+  "success_cases": [
+    "PNG, UTF-8 text and MP4 copied; destination bytes, metadata and result SHA256 verified",
+    "Transient real loopback HTTP 503 recovered after worker reinitialization using persisted SQLite state",
+    "Ten Kafka journal/DLQ events consumed back and matched by topic and job ID",
+    "Simulated publisher exception retained an unpublished uncopied retry; real publisher restored and job completed",
+    "Duplicate discovery did not enqueue duplicate jobs"
+  ],
+  "failure_cases": [
+    "Corrupt PNG exhausted retries and published DLQ",
+    "Source object deleted after discovery exhausted retries and published DLQ",
+    "Repeated real loopback HTTP 503 exhausted retries and published DLQ",
+    "Missing source bucket rejected during discovery"
+  ],
+  "limitations": [
+    "S3Mock is a test fixture, not AWS IAM or production S3 validation",
+    "Kafka is the durable event journal; SQLite is the authoritative work queue",
+    "Broker outage was a publisher exception injection, not an actual broker crash",
+    "Media processing is metadata inspection, not transcoding/OCR",
+    "No native NiFi, Camel K, SeaTunnel or Airflow runtime was executed in this test",
+    "Only local generated synthetic media was used"
+  ]
+}

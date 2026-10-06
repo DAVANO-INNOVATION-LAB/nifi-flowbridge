@@ -1,0 +1,39 @@
+[
+  {
+    "from": {
+      "parameters": {
+        "autoCreateBucket": false,
+        "deleteAfterRead": false,
+        "forcePathStyle": true,
+        "includeBody": true,
+        "overrideEndpoint": true,
+        "prefix": "",
+        "region": "us-east-1",
+        "uriEndpointOverride": "http://s3mock:9090",
+        "useDefaultCredentialsProvider": true
+      },
+      "steps": [
+        {
+          "setHeader": {
+            "name": "CamelAwsS3Key",
+            "simple": "processed/${header.CamelAwsS3Key}"
+          }
+        },
+        {
+          "to": {
+            "parameters": {
+              "autoCreateBucket": false,
+              "forcePathStyle": true,
+              "overrideEndpoint": true,
+              "region": "us-east-1",
+              "uriEndpointOverride": "http://s3mock:9090",
+              "useDefaultCredentialsProvider": true
+            },
+            "uri": "aws2-s3://destination-text"
+          }
+        }
+      ],
+      "uri": "aws2-s3://source-text"
+    }
+  }
+]

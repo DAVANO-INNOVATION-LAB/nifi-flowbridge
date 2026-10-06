@@ -15,3 +15,17 @@ Delivery is at least once, and target group-offset updates are not atomic across
 Report suspected security flaws through GitHub's private vulnerability reporting for this repository when available. Do not post exploit details, production definitions or secrets in a public issue. If private reporting is unavailable, ask maintainers for a private reporting channel without including the sensitive details.
 
 Generated Kafka dependencies are pinned to 3.9.2, which includes the client fixes described in [Apache Kafka security advisories](https://kafka.apache.org/community/cve-list/) for CVE-2026-33558 and CVE-2026-35554. This is not a claim that all dependencies or target platforms are free of vulnerabilities.
+
+## Expanded assessment and generated Airflow code
+
+Graph analysis never executes processors, expressions, scripts or parameter providers. XML ingestion rejects DTD/entity declarations and is bounded; XML-derived flows remain assessment-only. Known credentials are redacted from graph output, but this is not a universal secret scanner. Remove sensitive source exports before sharing.
+
+Airflow generation only accepts explicit finite mappings and a scheduling-change acknowledgement. Generated DAGs start paused with no schedule and no retries. The runtime validates HTTPS certificates, refuses redirects and ambient proxies, and bounds response and XCom sizes. Downloading a DAG does not execute its HTTP requests. Installing or running it can contact the configured endpoint and persist response data in XCom. Review worker egress, connection authority, access controls and retention before running.
+
+NiFi upgrade plans include source fingerprints and never apply themselves. Revalidate the unchanged input, target bundles and all unmapped components before applying any patch.
+
+## Media demonstration and worker
+
+The test environment uses generated fixtures and explicit dummy credentials on an internal Docker network. It does not test AWS IAM. The exported worker uses the AWS SDK credential provider chain and a separate HTTPS processing endpoint; no credentials belong in blueprint files. Kafka security defaults to TLS in the worker CLI and may be configured through the supported environment properties.
+
+SQLite must be kept on protected persistent storage. Kafka is an acknowledged event journal, not the worker's checkpoint authority. Cross-system effects remain at least once; consumers and processing endpoints must honor job IDs/idempotency keys. An output object can remain after processing fails. The reference implementation is bounded to 64 MiB objects and does not perform antivirus scanning, OCR or transcoding. Native copy drafts can write immediately if deployed and remain explicitly incomplete.

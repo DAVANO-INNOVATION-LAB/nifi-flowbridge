@@ -1,0 +1,33 @@
+{
+  "env": {
+    "job.mode": "BATCH",
+    "parallelism": 1
+  },
+  "sink": {
+    "S3File": {
+      "bucket": "s3a://destination-text",
+      "file_format_type": "binary",
+      "fs.s3a.aws.credentials.provider": "com.amazonaws.auth.InstanceProfileCredentialsProvider",
+      "fs.s3a.endpoint": "http://s3mock:9090",
+      "hadoop_s3_properties": {
+        "fs.s3a.path.style.access": "true"
+      },
+      "path": "/processed/",
+      "plugin_input": "lane-982d9e3eb996",
+      "tmp_path": "/.flowbridge-tmp/lane-982d9e3eb996"
+    }
+  },
+  "source": {
+    "S3File": {
+      "bucket": "s3a://source-text",
+      "file_format_type": "binary",
+      "fs.s3a.aws.credentials.provider": "com.amazonaws.auth.InstanceProfileCredentialsProvider",
+      "fs.s3a.endpoint": "http://s3mock:9090",
+      "hadoop_s3_properties": {
+        "fs.s3a.path.style.access": "true"
+      },
+      "path": "/",
+      "plugin_output": "lane-982d9e3eb996"
+    }
+  }
+}

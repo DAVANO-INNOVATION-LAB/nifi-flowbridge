@@ -9,12 +9,14 @@ from .io import read_document, write_artifacts
 def main():
     parser = argparse.ArgumentParser(description="Inspect and migrate a supported flow locally.")
     sub = parser.add_subparsers(dest="command", required=True)
-    for command in ("analyze", "convert"):
+    for command in ("analyze", "assess", "convert"):
         p = sub.add_parser(command)
         p.add_argument("input", type=Path)
         p.add_argument("--source", default="auto", choices=["auto", "nifi", "seatunnel", "camel-k", "kafka", "flowbridge"])
+        p.add_argument("--nifi-version", default="auto")
         if command == "convert":
-            p.add_argument("--target", required=True, choices=["nifi", "seatunnel", "camel-k", "kafka", "flowbridge"])
+            p.add_argument("--one-shot-batch", action="store_true", help="Acknowledge conversion to a manually triggered one-shot Airflow workflow")
+            p.add_argument("--target", required=True, choices=["nifi", "seatunnel", "camel-k", "kafka", "flowbridge", "airflow", "nifi-upgrade"])
             p.add_argument("--output", type=Path, required=True)
             p.add_argument("--accept-warnings", action="store_true", help="Export review artifacts despite compatibility warnings")
     serve = sub.add_parser("serve")
@@ -26,10 +28,14 @@ def main():
         run(args.host, args.port)
         return 0
     try:
-        from .service import analyze, convert
+        from .service import analyze, assess, convert
         with args.input.open("rb") as stream:
             data = read_document(stream.read(2 * 1024 * 1024 + 1))
-        result = analyze(data, args.source) if args.command == "analyze" else convert(data, args.source, args.target)
+        if args.command == "assess":
+            result = assess(data, args.source, args.nifi_version)
+            print(json.dumps(result, indent=2))
+            return 0 if result["report"]["ok"] else 2
+        result = analyze(data, args.source) if args.command == "analyze" else convert(data, args.source, args.target, batch_contract={"mode":"one_shot","acknowledge_scheduling_change":True} if args.one_shot_batch else None, nifi_version=args.nifi_version)
         print(json.dumps(result["report"], indent=2))
         if not result["report"]["ok"]:
             return 2

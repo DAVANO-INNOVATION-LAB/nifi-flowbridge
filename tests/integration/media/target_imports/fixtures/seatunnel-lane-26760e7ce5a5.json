@@ -1,0 +1,33 @@
+{
+  "env": {
+    "job.mode": "BATCH",
+    "parallelism": 1
+  },
+  "sink": {
+    "S3File": {
+      "bucket": "s3a://destination-videos",
+      "file_format_type": "binary",
+      "fs.s3a.aws.credentials.provider": "com.amazonaws.auth.InstanceProfileCredentialsProvider",
+      "fs.s3a.endpoint": "http://s3mock:9090",
+      "hadoop_s3_properties": {
+        "fs.s3a.path.style.access": "true"
+      },
+      "path": "/processed/",
+      "plugin_input": "lane-26760e7ce5a5",
+      "tmp_path": "/.flowbridge-tmp/lane-26760e7ce5a5"
+    }
+  },
+  "source": {
+    "S3File": {
+      "bucket": "s3a://source-videos",
+      "file_format_type": "binary",
+      "fs.s3a.aws.credentials.provider": "com.amazonaws.auth.InstanceProfileCredentialsProvider",
+      "fs.s3a.endpoint": "http://s3mock:9090",
+      "hadoop_s3_properties": {
+        "fs.s3a.path.style.access": "true"
+      },
+      "path": "/",
+      "plugin_output": "lane-26760e7ce5a5"
+    }
+  }
+}

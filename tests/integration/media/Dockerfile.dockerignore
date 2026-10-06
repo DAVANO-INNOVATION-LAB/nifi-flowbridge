@@ -1,0 +1,8 @@
+**
+!flowbridge
+!flowbridge/**
+!tests
+!tests/integration
+!tests/integration/media
+!tests/integration/media/**
+**/__pycache__

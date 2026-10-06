@@ -1,0 +1,39 @@
+{
+  "schema": "flowbridge/native-target-import-evidence/v1",
+  "date": "2026-10-06",
+  "camel": {
+    "version": "4.18.0",
+    "milestone": "native_yaml_dsl_import",
+    "status": "passed",
+    "lanes": 3,
+    "source_and_sink_endpoint_options_resolved": true,
+    "unknown_eip_rejected": true,
+    "unknown_aws_option_rejected": true,
+    "context_started": false,
+    "kubernetes_admission_verified": false,
+    "media_transfer_verified": false
+  },
+  "seatunnel": {
+    "version_target": "2.3.13",
+    "milestone": "syntax_only",
+    "syntax_parser": "com.typesafe:config:1.4.3",
+    "lanes": 3,
+    "malformed_syntax_rejected": true,
+    "unknown_connector_accepted_by_syntax_parser": true,
+    "native_plugin_import_verified": false,
+    "media_transfer_verified": false,
+    "released_check_not_used": "Upstream reports --check is a no-op accepting invalid configuration.",
+    "source": "https://github.com/apache/seatunnel/issues/11511",
+    "unresolved": "Actual SeaTunnel S3 connector loading, binary reconstruction and option validation remain unverified."
+  },
+  "complete_media_contract_equivalence": false,
+  "reproduction": "tests/integration/media/target_imports/README.md",
+  "fixture_sha256": {
+    "camel-lane-21b2eed1e328.json": "413f07b3c10314fd965945897a612bf6561ce37cac1ef7ec705d8980ac805189",
+    "camel-lane-26760e7ce5a5.json": "2ecabf1b6acbf83a0a001bf283eac77a28fa244bfddaa96ba0792e31c5651627",
+    "camel-lane-982d9e3eb996.json": "9a7c3b1b0a139ee98d521b78cd7e158206f8a32d6e7b6acd15fa12e01d72abf7",
+    "seatunnel-lane-21b2eed1e328.json": "97c95dd54b52f20c02ffd001724153597cdc99c26c020b6cf0073f5326f98ec2",
+    "seatunnel-lane-26760e7ce5a5.json": "c47ee237ee9b0c8b0345c78528280961752d0728303569462fa2d2b85c1df66f",
+    "seatunnel-lane-982d9e3eb996.json": "f1d6d639088ce7504c4c4aaa255e52d670cefad323aef2a19640861757dd1f41"
+  }
+}

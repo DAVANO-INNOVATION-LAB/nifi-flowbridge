@@ -16,6 +16,9 @@ def read_document(raw):
             raw = stream.read(MAX_BYTES + 1)
         if len(raw) > MAX_BYTES:
             raise ValueError("Expanded input exceeds the 2 MiB limit")
+    if raw.lstrip().startswith(b"<"):
+        from .nifi_xml import parse_nifi_xml
+        return parse_nifi_xml(raw)
     def unique(pairs):
         result = {}
         for key, value in pairs:
@@ -61,3 +64,21 @@ def write_artifacts(files, directory):
         target = directory / name
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(content, encoding="utf-8")
+
+
+def read_archive(raw):
+    """Read bounded UTF-8 review artifacts without extracting files to disk."""
+    if len(raw)>MAX_BYTES: raise ValueError("Archive exceeds size limit")
+    files={};total=0
+    with zipfile.ZipFile(io.BytesIO(raw)) as source:
+        entries=source.infolist()
+        if len(entries)>100:raise ValueError("Too many archive entries")
+        for entry in entries:
+            safe_name(entry.filename)
+            if entry.is_dir() or entry.filename in files or entry.file_size>MAX_BYTES:
+                raise ValueError("Invalid archive entry")
+            with source.open(entry) as stream:content=stream.read(MAX_BYTES-total+1)
+            total+=len(content)
+            if total>MAX_BYTES:raise ValueError("Expanded archive exceeds size limit")
+            files[entry.filename]=content.decode("utf-8")
+    return files

@@ -64,7 +64,7 @@
           "topic": "events-in"
         },
         "runDurationMillis": 0,
-        "scheduledState": "STOPPED",
+        "scheduledState": "DISABLED",
         "schedulingPeriod": "0 sec",
         "schedulingStrategy": "TIMER_DRIVEN",
         "type": "org.apache.nifi.processors.kafka.pubsub.ConsumeKafka_2_6",
@@ -93,7 +93,7 @@
           "topic": "events-out"
         },
         "runDurationMillis": 0,
-        "scheduledState": "STOPPED",
+        "scheduledState": "DISABLED",
         "schedulingPeriod": "0 sec",
         "schedulingStrategy": "TIMER_DRIVEN",
         "type": "org.apache.nifi.processors.kafka.pubsub.PublishKafka_2_6",
