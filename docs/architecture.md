@@ -1,6 +1,6 @@
 # Architecture
 
-NiFi Flowbridge is a local, Apache-2.0-licensed importer and exporter for a deliberately bounded subset of flow definitions. It belongs to DAVANO INNOVATION LAB and is independent of the Apache Software Foundation.
+NiFi Flowbridge is a local, Apache-2.0-licensed importer and exporter for a deliberately bounded subset of flow definitions. It belongs to Davano Innovation Labs and is independent of the Apache Software Foundation.
 
 ## Conversion contract
 

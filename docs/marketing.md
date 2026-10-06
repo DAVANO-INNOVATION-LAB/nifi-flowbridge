@@ -6,7 +6,7 @@ These are draft assets for maintainers to publish after the release acceptance c
 
 **NiFi Flowbridge — inspect, import and export supported data flows across NiFi, SeaTunnel, Camel K and Kafka.**
 
-A free, open-source migration workbench from DAVANO INNOVATION LAB. Bring a supported flow definition, see what can translate, and download a target project with compatibility findings. Run it locally without a paid AI service.
+A free, open-source migration workbench from Davano Innovation Labs. Bring a supported flow definition, see what can translate, and download a target project with compatibility findings. Run it locally without a paid AI service.
 
 ## Initial-release announcement
 

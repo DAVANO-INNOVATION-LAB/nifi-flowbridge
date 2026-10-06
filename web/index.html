@@ -9,7 +9,7 @@
   <script src="/app.js" defer></script>
 </head>
 <body>
-  <header class="masthead"><a class="brand" href="/" aria-label="Flowbridge home"><img class="brand-logo" src="/brand.png" alt="Devano Innovation Lab logo"> Flowbridge</a><span class="organization">DEVANO INNOVATION LAB <span class="badge">OPEN SOURCE</span></span></header>
+  <header class="masthead"><a class="brand" href="/" aria-label="Flowbridge home"><img class="brand-logo" src="/brand.png" alt="Davano Innovation Labs logo"> Flowbridge</a><span class="organization">Davano Innovation Labs <span class="badge">OPEN SOURCE</span></span></header>
   <main>
     <section class="intro" aria-labelledby="headline"><p class="eyebrow">FLOW MIGRATION WORKSPACE</p><h1 id="headline">Your flow.<br>A new destination.</h1><p class="lede">Import a flow, understand what translates, and export a project for your next platform.</p><div class="platforms" aria-label="Supported platforms"><span>Apache NiFi</span><span aria-hidden="true">↔</span><span>SeaTunnel</span><span> Camel K</span><span>Kafka</span><span>Airflow</span></div></section>
     <section class="panel" id="media-demo" hidden aria-labelledby="media-demo-title"><div class="panel-heading"><div><p class="step">THREE-STREAM MEDIA ETL</p><h2 id="media-demo-title">Images, text and video</h2></div></div><div class="media-lanes"><div>Images bucket → durable work records → images destination</div><div>Text bucket → durable work records → text destination</div><div>Video bucket → durable work records → video destination</div></div><p>Object-reference events go to Kafka. The reference worker keeps checkpoints in SQLite, copies media to separate destination buckets, and calls a processing engine. Retries and dead-letter records retain failures for review.</p><p class="hint">Recorded synthetic test results below are evidence from isolated fixtures, not current production status. Native target import and execution are separate checks.</p><p id="media-proof-summary"></p><div class="live-connections"><div><h3>Successful checks</h3><ul id="media-success"></ul></div><div><h3>Deliberate failures handled</h3><ul id="media-failures"></ul></div></div><details><summary>Full evidence and limitations</summary><pre id="media-evidence" class="live-summary"></pre></details></section>
@@ -65,7 +65,7 @@
       <p id="platform-status" class="status" role="status" aria-live="polite">Connected operations require the server's live mode and your owner access token.</p>
       <pre id="platform-result" class="live-summary" hidden></pre>
     </section>
-    <footer><span class="footer-brand"><img class="brand-logo" src="/brand.png" alt="Devano Innovation Lab logo"><strong>Devano Innovation Lab</strong></span><span>Open source · Built by Devano Innovation Lab</span></footer>
+    <footer><span class="footer-brand"><img class="brand-logo" src="/brand.png" alt="Davano Innovation Labs logo"><strong>Davano Innovation Labs</strong></span><span>Open source · Built by Davano Innovation Labs</span></footer>
   </main>
 </body>
 </html>

@@ -2,7 +2,7 @@
 
 **Import and export supported flows, inspect running platforms, and move Kafka records with guarded cutover.**
 
-A free, local migration workbench from Devano Innovation Lab. No account, paid API, AI model, or telemetry is required. Apache-2.0 licensed.
+A free, local migration workbench from Davano Innovation Labs. No account, paid API, AI model, or telemetry is required. Apache-2.0 licensed.
 
 > **0.3: broader assessment, explicitly bounded execution.** Inventory NiFi 1.x/2.x JSON and legacy 1.x XML; inspect component-level migration gaps; generate supported one-shot HTTP/transformation workflows for Airflow 3; plan selected NiFi 1→2 upgrades; or use the existing Kafka conversion and live-transfer paths. This is not a universal NiFi replacement. NiFi 3.x compatibility is unverified and blocked.
 
