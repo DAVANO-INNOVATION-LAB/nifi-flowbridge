@@ -8,3 +8,5 @@
 .brand-logo{width:48px;height:48px;object-fit:contain;display:inline-block;vertical-align:middle}.footer-brand{display:flex;align-items:center;gap:12px}footer .brand-logo{width:40px;height:40px}
 
 .media-lanes{display:grid;gap:10px;margin:18px 0}.media-lanes>div{padding:14px 18px;background:#f4f2ec;border-left:4px solid #ff6b24;border-radius:6px;font-weight:600}#media-demo{margin-bottom:24px}
+
+footer{justify-content:center;align-items:center;flex-direction:column;text-align:center;gap:10px}.footer-brand{justify-content:center}
