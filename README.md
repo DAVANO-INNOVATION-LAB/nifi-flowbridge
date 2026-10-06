@@ -28,9 +28,17 @@ The container runs without root, with a read-only filesystem, dropped capabiliti
 
 The workbench uses local assets and needs no cloud account or CDN. Preload the application and media-worker images before disconnecting; the offline deployment refuses image pulls. See [offline operating instructions](docs/airgap-operations.txt) for image transfer, private endpoints, CA trust, persistence and scope limits. Isolated integration evidence is recorded separately from physical air-gap assurance.
 
+## Continuous native NiFi migration demonstration
+
+Choose **Try tested native NiFi migration**, then **Assess full flow** and export to **Continuous S3 worker**. This accepts a native NiFi 2.12 export with three lanes, each containing `ListS3 → FetchS3Object → UpdateAttribute → PutS3Object`. The application emits an executable polling worker and a persistent SQLite checkpoint ledger. Processing in this profile means a literal image/text/video classification stored as S3 metadata; content and keys are preserved.
+
+Cutover requires stopping NiFi listing, draining its queues, stopping its remaining processors, and reconciling destination bytes and metadata. Incoming files can continue accumulating in source storage. Explicitly approve backfill for objects that arrived during the handover, then start the generated worker. This does not transfer NiFi internal state or guarantee zero processing downtime. Historical versions, arbitrary transformations and custom storage policies are blocked.
+
+The silent video in the UI presents recorded integration evidence. The native example and complete evidence are available from the UI; this is a bounded native NiFi-to-worker migration, separate from the other target draft packages below.
+
 ## Three-stream media ETL demonstration
 
-The local UI includes a two-minute narrated [animated walkthrough](web/demo.mp4), visualizing recorded synthetic test evidence. It shows transfers, processing, recovery and target-specific limits; it is not a live screen recording or proof of universal native migration.
+The local UI includes a silent [migration evidence replay](web/demo.mp4) for the native NiFi handover described above. The separate media blueprint below demonstrates additional draft target packages.
 
 Choose **Try three-stream media ETL** in the UI. It loads three source buckets (images, text, video), separate destination buckets, Kafka reference-event topics and processing endpoints. The recorded evidence panel shows successful copies, retry recovery, deduplication, and deliberate terminal failures from isolated S3Mock/Kafka fixtures. No cloud account is required for the demonstration.
 

@@ -40,6 +40,12 @@ def assess(data, source="auto", nifi_version="auto"):
 
 
 def convert(data, source="auto", target="flowbridge", batch_contract=None, nifi_version="auto"):
+    if target == "continuous-worker":
+        declared = nifi_version if nifi_version != "auto" else data.get("nifiVersion")
+        if source not in ("auto", "nifi") or (declared is not None and (not isinstance(declared,str) or declared.split(".",1)[0] != "2")):
+            return {"report":{"ok":False,"errors":[{"code":"unsupported_version","message":"Continuous native S3 migration requires an explicitly compatible NiFi 2 flow."}],"warnings":[]},"files":{}}
+        from .nifi_s3 import export_nifi_s3
+        return export_nifi_s3(data)
     media = _media_document(data)
     if media is not None:
         if target == "nifi":

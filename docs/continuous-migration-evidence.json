@@ -1,0 +1,848 @@
+{
+  "result": "passed",
+  "recorded_at": "2026-10-06T22:31:24.914420+00:00",
+  "source_runtime": "Apache NiFi 2.12.0",
+  "source_export_sha256": "971f2605d26b8c01607ae8104f22c8546992de4a58c59593b5e50fdb54de80b5",
+  "exported_files": [
+    "LICENSE",
+    "README.md",
+    "continuous-s3-profile.json",
+    "flowbridge/__init__.py",
+    "flowbridge/nifi_s3.py",
+    "requirements.txt"
+  ],
+  "generated_module_executed": true,
+  "unsupported_processor_rejected": true,
+  "assessment_report": {
+    "ok": true,
+    "source": "nifi",
+    "errors": [],
+    "warnings": [
+      {
+        "severity": "warning",
+        "code": "version_unverified",
+        "message": "Flow encoding versions and individual component bundle versions do not establish the NiFi runtime version."
+      },
+      {
+        "severity": "warning",
+        "code": "scheduling_mapping_required",
+        "message": "NiFi scheduling or cluster execution settings require explicit target scheduling semantics.",
+        "component_id": "396c9b00-d652-3c0d-89d3-b7bccd7000da"
+      },
+      {
+        "severity": "warning",
+        "code": "component_mapping_required",
+        "message": "No semantic mapping is implemented for this processor; inventory is preserved for review.",
+        "component_id": "396c9b00-d652-3c0d-89d3-b7bccd7000da"
+      },
+      {
+        "severity": "warning",
+        "code": "component_mapping_required",
+        "message": "FlowFile attributes and NiFi expression evaluation need explicit equivalent mappings.",
+        "component_id": "394862c4-bd6f-3384-8485-1c7bd39da310"
+      },
+      {
+        "severity": "warning",
+        "code": "component_mapping_required",
+        "message": "No semantic mapping is implemented for this processor; inventory is preserved for review.",
+        "component_id": "3695bea8-21fa-3728-b171-2e3b712069e7"
+      },
+      {
+        "severity": "warning",
+        "code": "component_mapping_required",
+        "message": "No semantic mapping is implemented for this processor; inventory is preserved for review.",
+        "component_id": "67b22800-9c88-3739-b691-2f77fac86ac6"
+      },
+      {
+        "severity": "warning",
+        "code": "component_mapping_required",
+        "message": "No semantic mapping is implemented for this processor; inventory is preserved for review.",
+        "component_id": "e9a2f586-5c4e-3844-b825-b560e4304ecb"
+      },
+      {
+        "severity": "warning",
+        "code": "component_mapping_required",
+        "message": "FlowFile attributes and NiFi expression evaluation need explicit equivalent mappings.",
+        "component_id": "126889dc-f71a-328a-8b8f-3de61d810568"
+      },
+      {
+        "severity": "warning",
+        "code": "scheduling_mapping_required",
+        "message": "NiFi scheduling or cluster execution settings require explicit target scheduling semantics.",
+        "component_id": "d81d7126-974d-3e13-b9bc-c618dd9753ec"
+      },
+      {
+        "severity": "warning",
+        "code": "component_mapping_required",
+        "message": "No semantic mapping is implemented for this processor; inventory is preserved for review.",
+        "component_id": "d81d7126-974d-3e13-b9bc-c618dd9753ec"
+      },
+      {
+        "severity": "warning",
+        "code": "component_mapping_required",
+        "message": "No semantic mapping is implemented for this processor; inventory is preserved for review.",
+        "component_id": "916f2073-6a3b-3258-b571-0f72bda62b61"
+      },
+      {
+        "severity": "warning",
+        "code": "component_mapping_required",
+        "message": "No semantic mapping is implemented for this processor; inventory is preserved for review.",
+        "component_id": "5fc93579-c654-3013-bc9a-cc1f8054e447"
+      },
+      {
+        "severity": "warning",
+        "code": "scheduling_mapping_required",
+        "message": "NiFi scheduling or cluster execution settings require explicit target scheduling semantics.",
+        "component_id": "13185acf-bf06-33d8-9a19-5c64ee44ff0e"
+      },
+      {
+        "severity": "warning",
+        "code": "component_mapping_required",
+        "message": "No semantic mapping is implemented for this processor; inventory is preserved for review.",
+        "component_id": "13185acf-bf06-33d8-9a19-5c64ee44ff0e"
+      },
+      {
+        "severity": "warning",
+        "code": "component_mapping_required",
+        "message": "No semantic mapping is implemented for this processor; inventory is preserved for review.",
+        "component_id": "b22bf949-a253-34f2-b9a4-a446e5295b1c"
+      },
+      {
+        "severity": "warning",
+        "code": "component_mapping_required",
+        "message": "FlowFile attributes and NiFi expression evaluation need explicit equivalent mappings.",
+        "component_id": "5c45f258-daf8-3405-87a3-daccdd86a7fd"
+      },
+      {
+        "severity": "warning",
+        "code": "expression_mapping_required",
+        "message": "NiFi Expression Language is preserved but is not evaluated or assumed portable.",
+        "component_id": "3695bea8-21fa-3728-b171-2e3b712069e7"
+      },
+      {
+        "severity": "warning",
+        "code": "expression_mapping_required",
+        "message": "NiFi Expression Language is preserved but is not evaluated or assumed portable.",
+        "component_id": "67b22800-9c88-3739-b691-2f77fac86ac6"
+      },
+      {
+        "severity": "warning",
+        "code": "expression_mapping_required",
+        "message": "NiFi Expression Language is preserved but is not evaluated or assumed portable.",
+        "component_id": "67b22800-9c88-3739-b691-2f77fac86ac6"
+      },
+      {
+        "severity": "warning",
+        "code": "expression_mapping_required",
+        "message": "NiFi Expression Language is preserved but is not evaluated or assumed portable.",
+        "component_id": "67b22800-9c88-3739-b691-2f77fac86ac6"
+      },
+      {
+        "severity": "warning",
+        "code": "expression_mapping_required",
+        "message": "NiFi Expression Language is preserved but is not evaluated or assumed portable.",
+        "component_id": "67b22800-9c88-3739-b691-2f77fac86ac6"
+      },
+      {
+        "severity": "warning",
+        "code": "expression_mapping_required",
+        "message": "NiFi Expression Language is preserved but is not evaluated or assumed portable.",
+        "component_id": "67b22800-9c88-3739-b691-2f77fac86ac6"
+      },
+      {
+        "severity": "warning",
+        "code": "expression_mapping_required",
+        "message": "NiFi Expression Language is preserved but is not evaluated or assumed portable.",
+        "component_id": "67b22800-9c88-3739-b691-2f77fac86ac6"
+      },
+      {
+        "severity": "warning",
+        "code": "expression_mapping_required",
+        "message": "NiFi Expression Language is preserved but is not evaluated or assumed portable.",
+        "component_id": "67b22800-9c88-3739-b691-2f77fac86ac6"
+      },
+      {
+        "severity": "warning",
+        "code": "expression_mapping_required",
+        "message": "NiFi Expression Language is preserved but is not evaluated or assumed portable.",
+        "component_id": "67b22800-9c88-3739-b691-2f77fac86ac6"
+      },
+      {
+        "severity": "warning",
+        "code": "expression_mapping_required",
+        "message": "NiFi Expression Language is preserved but is not evaluated or assumed portable.",
+        "component_id": "67b22800-9c88-3739-b691-2f77fac86ac6"
+      },
+      {
+        "severity": "warning",
+        "code": "expression_mapping_required",
+        "message": "NiFi Expression Language is preserved but is not evaluated or assumed portable.",
+        "component_id": "e9a2f586-5c4e-3844-b825-b560e4304ecb"
+      },
+      {
+        "severity": "warning",
+        "code": "expression_mapping_required",
+        "message": "NiFi Expression Language is preserved but is not evaluated or assumed portable.",
+        "component_id": "e9a2f586-5c4e-3844-b825-b560e4304ecb"
+      },
+      {
+        "severity": "warning",
+        "code": "expression_mapping_required",
+        "message": "NiFi Expression Language is preserved but is not evaluated or assumed portable.",
+        "component_id": "e9a2f586-5c4e-3844-b825-b560e4304ecb"
+      },
+      {
+        "severity": "warning",
+        "code": "expression_mapping_required",
+        "message": "NiFi Expression Language is preserved but is not evaluated or assumed portable.",
+        "component_id": "e9a2f586-5c4e-3844-b825-b560e4304ecb"
+      },
+      {
+        "severity": "warning",
+        "code": "expression_mapping_required",
+        "message": "NiFi Expression Language is preserved but is not evaluated or assumed portable.",
+        "component_id": "e9a2f586-5c4e-3844-b825-b560e4304ecb"
+      },
+      {
+        "severity": "warning",
+        "code": "expression_mapping_required",
+        "message": "NiFi Expression Language is preserved but is not evaluated or assumed portable.",
+        "component_id": "e9a2f586-5c4e-3844-b825-b560e4304ecb"
+      },
+      {
+        "severity": "warning",
+        "code": "expression_mapping_required",
+        "message": "NiFi Expression Language is preserved but is not evaluated or assumed portable.",
+        "component_id": "e9a2f586-5c4e-3844-b825-b560e4304ecb"
+      },
+      {
+        "severity": "warning",
+        "code": "expression_mapping_required",
+        "message": "NiFi Expression Language is preserved but is not evaluated or assumed portable.",
+        "component_id": "e9a2f586-5c4e-3844-b825-b560e4304ecb"
+      },
+      {
+        "severity": "warning",
+        "code": "expression_mapping_required",
+        "message": "NiFi Expression Language is preserved but is not evaluated or assumed portable.",
+        "component_id": "e9a2f586-5c4e-3844-b825-b560e4304ecb"
+      },
+      {
+        "severity": "warning",
+        "code": "expression_mapping_required",
+        "message": "NiFi Expression Language is preserved but is not evaluated or assumed portable.",
+        "component_id": "916f2073-6a3b-3258-b571-0f72bda62b61"
+      },
+      {
+        "severity": "warning",
+        "code": "expression_mapping_required",
+        "message": "NiFi Expression Language is preserved but is not evaluated or assumed portable.",
+        "component_id": "5fc93579-c654-3013-bc9a-cc1f8054e447"
+      },
+      {
+        "severity": "warning",
+        "code": "expression_mapping_required",
+        "message": "NiFi Expression Language is preserved but is not evaluated or assumed portable.",
+        "component_id": "5fc93579-c654-3013-bc9a-cc1f8054e447"
+      },
+      {
+        "severity": "warning",
+        "code": "expression_mapping_required",
+        "message": "NiFi Expression Language is preserved but is not evaluated or assumed portable.",
+        "component_id": "5fc93579-c654-3013-bc9a-cc1f8054e447"
+      },
+      {
+        "severity": "warning",
+        "code": "expression_mapping_required",
+        "message": "NiFi Expression Language is preserved but is not evaluated or assumed portable.",
+        "component_id": "5fc93579-c654-3013-bc9a-cc1f8054e447"
+      },
+      {
+        "severity": "warning",
+        "code": "expression_mapping_required",
+        "message": "NiFi Expression Language is preserved but is not evaluated or assumed portable.",
+        "component_id": "5fc93579-c654-3013-bc9a-cc1f8054e447"
+      },
+      {
+        "severity": "warning",
+        "code": "expression_mapping_required",
+        "message": "NiFi Expression Language is preserved but is not evaluated or assumed portable.",
+        "component_id": "5fc93579-c654-3013-bc9a-cc1f8054e447"
+      },
+      {
+        "severity": "warning",
+        "code": "expression_mapping_required",
+        "message": "NiFi Expression Language is preserved but is not evaluated or assumed portable.",
+        "component_id": "5fc93579-c654-3013-bc9a-cc1f8054e447"
+      },
+      {
+        "severity": "warning",
+        "code": "expression_mapping_required",
+        "message": "NiFi Expression Language is preserved but is not evaluated or assumed portable.",
+        "component_id": "5fc93579-c654-3013-bc9a-cc1f8054e447"
+      },
+      {
+        "severity": "warning",
+        "code": "expression_mapping_required",
+        "message": "NiFi Expression Language is preserved but is not evaluated or assumed portable.",
+        "component_id": "5fc93579-c654-3013-bc9a-cc1f8054e447"
+      },
+      {
+        "severity": "warning",
+        "code": "expression_mapping_required",
+        "message": "NiFi Expression Language is preserved but is not evaluated or assumed portable.",
+        "component_id": "b22bf949-a253-34f2-b9a4-a446e5295b1c"
+      }
+    ]
+  },
+  "native_processors": 12,
+  "native_connections": 9,
+  "native_groups": 4,
+  "native_processing": "literal media_type attribute persisted in destination S3 metadata",
+  "source_s3_endpoints": 1,
+  "destination_s3_endpoints": 1,
+  "lanes": 3,
+  "native_completed_before_export": 6,
+  "native_completed_at_drain": 6,
+  "baseline": {
+    "verified_existing": 6,
+    "pending_backfill": 9,
+    "source_state_imported": false
+  },
+  "target_processed": 27,
+  "total_produced": 33,
+  "total_destination_objects": 33,
+  "missing_objects": 0,
+  "hashes_matched": true,
+  "processing_metadata_matched": true,
+  "content_types_matched": true,
+  "worker_restart_repeat_processed": 0,
+  "arrivals_continued_during_handoff": true,
+  "timeline": [
+    {
+      "phase": "native_running",
+      "timestamp": "2026-10-06T22:31:13.793725+00:00",
+      "elapsed_seconds": 0.216,
+      "producer_generated": 0,
+      "source_objects": 0,
+      "destination_objects": 0,
+      "processing": "literal media_type attribute persisted as S3 user metadata"
+    },
+    {
+      "phase": "exported",
+      "timestamp": "2026-10-06T22:31:15.874325+00:00",
+      "elapsed_seconds": 2.297,
+      "producer_generated": 9,
+      "source_objects": 9,
+      "destination_objects": 6,
+      "native_destination_objects": 6
+    },
+    {
+      "phase": "assessed",
+      "timestamp": "2026-10-06T22:31:15.894478+00:00",
+      "elapsed_seconds": 2.317,
+      "producer_generated": 9,
+      "source_objects": 9,
+      "destination_objects": 6,
+      "accepted_profile": "ListS3/FetchS3Object/literal UpdateAttribute/PutS3Object",
+      "ok": true,
+      "errors": 0,
+      "warnings": 46
+    },
+    {
+      "phase": "target_packaged",
+      "timestamp": "2026-10-06T22:31:15.917456+00:00",
+      "elapsed_seconds": 2.34,
+      "producer_generated": 9,
+      "source_objects": 9,
+      "destination_objects": 6,
+      "files": 6,
+      "filenames": [
+        "LICENSE",
+        "README.md",
+        "continuous-s3-profile.json",
+        "flowbridge/__init__.py",
+        "flowbridge/nifi_s3.py",
+        "requirements.txt"
+      ]
+    },
+    {
+      "phase": "source_stop_requested",
+      "timestamp": "2026-10-06T22:31:15.935752+00:00",
+      "elapsed_seconds": 2.358,
+      "producer_generated": 9,
+      "source_objects": 9,
+      "destination_objects": 6
+    },
+    {
+      "phase": "nifi_drained",
+      "timestamp": "2026-10-06T22:31:16.131954+00:00",
+      "elapsed_seconds": 2.554,
+      "producer_generated": 9,
+      "source_objects": 9,
+      "destination_objects": 6,
+      "queued_flowfiles": 0,
+      "active_threads": 0,
+      "native_destination_objects": 6
+    },
+    {
+      "phase": "handoff_arrivals",
+      "timestamp": "2026-10-06T22:31:18.143981+00:00",
+      "elapsed_seconds": 4.566,
+      "producer_generated": 15,
+      "source_objects": 15,
+      "destination_objects": 6
+    },
+    {
+      "phase": "baseline_verified",
+      "timestamp": "2026-10-06T22:31:18.253273+00:00",
+      "elapsed_seconds": 4.676,
+      "producer_generated": 15,
+      "source_objects": 15,
+      "destination_objects": 6,
+      "verified_existing": 6,
+      "pending_backfill": 9,
+      "source_state_imported": false
+    },
+    {
+      "phase": "worker_started",
+      "timestamp": "2026-10-06T22:31:18.259343+00:00",
+      "elapsed_seconds": 4.682,
+      "producer_generated": 15,
+      "source_objects": 15,
+      "destination_objects": 6,
+      "poll_seconds": 1
+    },
+    {
+      "phase": "worker_poll",
+      "timestamp": "2026-10-06T22:31:18.306690+00:00",
+      "elapsed_seconds": 4.729,
+      "producer_generated": 15,
+      "source_objects": 15,
+      "destination_objects": 15,
+      "processed_this_poll": 9
+    },
+    {
+      "phase": "worker_poll",
+      "timestamp": "2026-10-06T22:31:19.366089+00:00",
+      "elapsed_seconds": 5.789,
+      "producer_generated": 18,
+      "source_objects": 18,
+      "destination_objects": 18,
+      "processed_this_poll": 3
+    },
+    {
+      "phase": "worker_poll",
+      "timestamp": "2026-10-06T22:31:20.429347+00:00",
+      "elapsed_seconds": 6.852,
+      "producer_generated": 21,
+      "source_objects": 21,
+      "destination_objects": 21,
+      "processed_this_poll": 3
+    },
+    {
+      "phase": "worker_poll",
+      "timestamp": "2026-10-06T22:31:21.524725+00:00",
+      "elapsed_seconds": 7.947,
+      "producer_generated": 24,
+      "source_objects": 24,
+      "destination_objects": 24,
+      "processed_this_poll": 3
+    },
+    {
+      "phase": "worker_poll",
+      "timestamp": "2026-10-06T22:31:22.603444+00:00",
+      "elapsed_seconds": 9.026,
+      "producer_generated": 27,
+      "source_objects": 27,
+      "destination_objects": 27,
+      "processed_this_poll": 3
+    },
+    {
+      "phase": "worker_poll",
+      "timestamp": "2026-10-06T22:31:23.675183+00:00",
+      "elapsed_seconds": 10.098,
+      "producer_generated": 30,
+      "source_objects": 30,
+      "destination_objects": 30,
+      "processed_this_poll": 3
+    },
+    {
+      "phase": "later_arrivals",
+      "timestamp": "2026-10-06T22:31:24.686104+00:00",
+      "elapsed_seconds": 11.109,
+      "producer_generated": 33,
+      "source_objects": 33,
+      "destination_objects": 30,
+      "target_processed": 24
+    },
+    {
+      "phase": "reconciliation_complete",
+      "timestamp": "2026-10-06T22:31:24.905717+00:00",
+      "elapsed_seconds": 11.328,
+      "producer_generated": 33,
+      "source_objects": 33,
+      "destination_objects": 33,
+      "matched_objects": 33,
+      "missing_objects": 0,
+      "unchanged_repeat_processed": 0
+    }
+  ],
+  "objects": [
+    {
+      "lane": "image",
+      "key": "incoming/0000-image.png",
+      "source_sha256": "4371149be76808ede2e39736bd07c9a9209f1d6207cfb3a530c7a2e84ab1a5a2",
+      "destination_sha256": "4371149be76808ede2e39736bd07c9a9209f1d6207cfb3a530c7a2e84ab1a5a2",
+      "media_type": "image",
+      "bytes": 69,
+      "source_content_type": "image/png",
+      "destination_content_type": "image/png"
+    },
+    {
+      "lane": "image",
+      "key": "incoming/0001-image.png",
+      "source_sha256": "4371149be76808ede2e39736bd07c9a9209f1d6207cfb3a530c7a2e84ab1a5a2",
+      "destination_sha256": "4371149be76808ede2e39736bd07c9a9209f1d6207cfb3a530c7a2e84ab1a5a2",
+      "media_type": "image",
+      "bytes": 69,
+      "source_content_type": "image/png",
+      "destination_content_type": "image/png"
+    },
+    {
+      "lane": "image",
+      "key": "incoming/0002-image.png",
+      "source_sha256": "4371149be76808ede2e39736bd07c9a9209f1d6207cfb3a530c7a2e84ab1a5a2",
+      "destination_sha256": "4371149be76808ede2e39736bd07c9a9209f1d6207cfb3a530c7a2e84ab1a5a2",
+      "media_type": "image",
+      "bytes": 69,
+      "source_content_type": "image/png",
+      "destination_content_type": "image/png"
+    },
+    {
+      "lane": "image",
+      "key": "incoming/0003-image.png",
+      "source_sha256": "4371149be76808ede2e39736bd07c9a9209f1d6207cfb3a530c7a2e84ab1a5a2",
+      "destination_sha256": "4371149be76808ede2e39736bd07c9a9209f1d6207cfb3a530c7a2e84ab1a5a2",
+      "media_type": "image",
+      "bytes": 69,
+      "source_content_type": "image/png",
+      "destination_content_type": "image/png"
+    },
+    {
+      "lane": "image",
+      "key": "incoming/0004-image.png",
+      "source_sha256": "4371149be76808ede2e39736bd07c9a9209f1d6207cfb3a530c7a2e84ab1a5a2",
+      "destination_sha256": "4371149be76808ede2e39736bd07c9a9209f1d6207cfb3a530c7a2e84ab1a5a2",
+      "media_type": "image",
+      "bytes": 69,
+      "source_content_type": "image/png",
+      "destination_content_type": "image/png"
+    },
+    {
+      "lane": "image",
+      "key": "incoming/0005-image.png",
+      "source_sha256": "4371149be76808ede2e39736bd07c9a9209f1d6207cfb3a530c7a2e84ab1a5a2",
+      "destination_sha256": "4371149be76808ede2e39736bd07c9a9209f1d6207cfb3a530c7a2e84ab1a5a2",
+      "media_type": "image",
+      "bytes": 69,
+      "source_content_type": "image/png",
+      "destination_content_type": "image/png"
+    },
+    {
+      "lane": "image",
+      "key": "incoming/0006-image.png",
+      "source_sha256": "4371149be76808ede2e39736bd07c9a9209f1d6207cfb3a530c7a2e84ab1a5a2",
+      "destination_sha256": "4371149be76808ede2e39736bd07c9a9209f1d6207cfb3a530c7a2e84ab1a5a2",
+      "media_type": "image",
+      "bytes": 69,
+      "source_content_type": "image/png",
+      "destination_content_type": "image/png"
+    },
+    {
+      "lane": "image",
+      "key": "incoming/0007-image.png",
+      "source_sha256": "4371149be76808ede2e39736bd07c9a9209f1d6207cfb3a530c7a2e84ab1a5a2",
+      "destination_sha256": "4371149be76808ede2e39736bd07c9a9209f1d6207cfb3a530c7a2e84ab1a5a2",
+      "media_type": "image",
+      "bytes": 69,
+      "source_content_type": "image/png",
+      "destination_content_type": "image/png"
+    },
+    {
+      "lane": "image",
+      "key": "incoming/0008-image.png",
+      "source_sha256": "4371149be76808ede2e39736bd07c9a9209f1d6207cfb3a530c7a2e84ab1a5a2",
+      "destination_sha256": "4371149be76808ede2e39736bd07c9a9209f1d6207cfb3a530c7a2e84ab1a5a2",
+      "media_type": "image",
+      "bytes": 69,
+      "source_content_type": "image/png",
+      "destination_content_type": "image/png"
+    },
+    {
+      "lane": "image",
+      "key": "incoming/0009-image.png",
+      "source_sha256": "4371149be76808ede2e39736bd07c9a9209f1d6207cfb3a530c7a2e84ab1a5a2",
+      "destination_sha256": "4371149be76808ede2e39736bd07c9a9209f1d6207cfb3a530c7a2e84ab1a5a2",
+      "media_type": "image",
+      "bytes": 69,
+      "source_content_type": "image/png",
+      "destination_content_type": "image/png"
+    },
+    {
+      "lane": "image",
+      "key": "incoming/0010-image.png",
+      "source_sha256": "4371149be76808ede2e39736bd07c9a9209f1d6207cfb3a530c7a2e84ab1a5a2",
+      "destination_sha256": "4371149be76808ede2e39736bd07c9a9209f1d6207cfb3a530c7a2e84ab1a5a2",
+      "media_type": "image",
+      "bytes": 69,
+      "source_content_type": "image/png",
+      "destination_content_type": "image/png"
+    },
+    {
+      "lane": "text",
+      "key": "incoming/0000-note.txt",
+      "source_sha256": "d6ebecd6155ae4be5afa51eb4be1413a483315c62edadbf4c7af71a45adf279f",
+      "destination_sha256": "d6ebecd6155ae4be5afa51eb4be1413a483315c62edadbf4c7af71a45adf279f",
+      "media_type": "text",
+      "bytes": 48,
+      "source_content_type": "text/plain",
+      "destination_content_type": "text/plain"
+    },
+    {
+      "lane": "text",
+      "key": "incoming/0001-note.txt",
+      "source_sha256": "d5474d49fcc9621059f433ece56084df51ad69640cd09241a82f88e7f979e03a",
+      "destination_sha256": "d5474d49fcc9621059f433ece56084df51ad69640cd09241a82f88e7f979e03a",
+      "media_type": "text",
+      "bytes": 48,
+      "source_content_type": "text/plain",
+      "destination_content_type": "text/plain"
+    },
+    {
+      "lane": "text",
+      "key": "incoming/0002-note.txt",
+      "source_sha256": "408bda0508574d6b211f36e4988eb66280ac85139d739bace1478b40e1dd5411",
+      "destination_sha256": "408bda0508574d6b211f36e4988eb66280ac85139d739bace1478b40e1dd5411",
+      "media_type": "text",
+      "bytes": 48,
+      "source_content_type": "text/plain",
+      "destination_content_type": "text/plain"
+    },
+    {
+      "lane": "text",
+      "key": "incoming/0003-note.txt",
+      "source_sha256": "fb3be2e6755fa38598a97590aef97cf3f6862a568cea40e95a190a6988c1d9c3",
+      "destination_sha256": "fb3be2e6755fa38598a97590aef97cf3f6862a568cea40e95a190a6988c1d9c3",
+      "media_type": "text",
+      "bytes": 48,
+      "source_content_type": "text/plain",
+      "destination_content_type": "text/plain"
+    },
+    {
+      "lane": "text",
+      "key": "incoming/0004-note.txt",
+      "source_sha256": "5b559a501034b5044fd4aa9cc0e6e8a597c86e0f5f575144e507eadd006fdc7b",
+      "destination_sha256": "5b559a501034b5044fd4aa9cc0e6e8a597c86e0f5f575144e507eadd006fdc7b",
+      "media_type": "text",
+      "bytes": 48,
+      "source_content_type": "text/plain",
+      "destination_content_type": "text/plain"
+    },
+    {
+      "lane": "text",
+      "key": "incoming/0005-note.txt",
+      "source_sha256": "16397e9ba0aeabab17f34c293245b730d02b1a74b08679ed95ab01f47c6109c1",
+      "destination_sha256": "16397e9ba0aeabab17f34c293245b730d02b1a74b08679ed95ab01f47c6109c1",
+      "media_type": "text",
+      "bytes": 48,
+      "source_content_type": "text/plain",
+      "destination_content_type": "text/plain"
+    },
+    {
+      "lane": "text",
+      "key": "incoming/0006-note.txt",
+      "source_sha256": "be158a13b3ead834170688a2dadd113029bba60482eabc5758931b9f2296a393",
+      "destination_sha256": "be158a13b3ead834170688a2dadd113029bba60482eabc5758931b9f2296a393",
+      "media_type": "text",
+      "bytes": 48,
+      "source_content_type": "text/plain",
+      "destination_content_type": "text/plain"
+    },
+    {
+      "lane": "text",
+      "key": "incoming/0007-note.txt",
+      "source_sha256": "ea22c6ff1f870ca267f790fb358ad8dd04b78187d29ae8d027c00315334452dc",
+      "destination_sha256": "ea22c6ff1f870ca267f790fb358ad8dd04b78187d29ae8d027c00315334452dc",
+      "media_type": "text",
+      "bytes": 48,
+      "source_content_type": "text/plain",
+      "destination_content_type": "text/plain"
+    },
+    {
+      "lane": "text",
+      "key": "incoming/0008-note.txt",
+      "source_sha256": "92b70f2f0ceb428b1b12adcd6d52688ae055152246b810165e5a1f0b30999017",
+      "destination_sha256": "92b70f2f0ceb428b1b12adcd6d52688ae055152246b810165e5a1f0b30999017",
+      "media_type": "text",
+      "bytes": 48,
+      "source_content_type": "text/plain",
+      "destination_content_type": "text/plain"
+    },
+    {
+      "lane": "text",
+      "key": "incoming/0009-note.txt",
+      "source_sha256": "23081d4706ff43bf163bab4bbf5c503cbe898ab227fa7d00a806e321ea60beb2",
+      "destination_sha256": "23081d4706ff43bf163bab4bbf5c503cbe898ab227fa7d00a806e321ea60beb2",
+      "media_type": "text",
+      "bytes": 48,
+      "source_content_type": "text/plain",
+      "destination_content_type": "text/plain"
+    },
+    {
+      "lane": "text",
+      "key": "incoming/0010-note.txt",
+      "source_sha256": "4e0a591de7490309bcd24923eb142a578367038970c7723a011a2c5879406852",
+      "destination_sha256": "4e0a591de7490309bcd24923eb142a578367038970c7723a011a2c5879406852",
+      "media_type": "text",
+      "bytes": 49,
+      "source_content_type": "text/plain",
+      "destination_content_type": "text/plain"
+    },
+    {
+      "lane": "video",
+      "key": "incoming/0000-clip.mp4",
+      "source_sha256": "dc1c1693241e39bdd740ce03ae32d81553f675ae81452ff62769393590cfb06d",
+      "destination_sha256": "dc1c1693241e39bdd740ce03ae32d81553f675ae81452ff62769393590cfb06d",
+      "media_type": "video",
+      "bytes": 1013,
+      "source_content_type": "video/mp4",
+      "destination_content_type": "video/mp4"
+    },
+    {
+      "lane": "video",
+      "key": "incoming/0001-clip.mp4",
+      "source_sha256": "dc1c1693241e39bdd740ce03ae32d81553f675ae81452ff62769393590cfb06d",
+      "destination_sha256": "dc1c1693241e39bdd740ce03ae32d81553f675ae81452ff62769393590cfb06d",
+      "media_type": "video",
+      "bytes": 1013,
+      "source_content_type": "video/mp4",
+      "destination_content_type": "video/mp4"
+    },
+    {
+      "lane": "video",
+      "key": "incoming/0002-clip.mp4",
+      "source_sha256": "dc1c1693241e39bdd740ce03ae32d81553f675ae81452ff62769393590cfb06d",
+      "destination_sha256": "dc1c1693241e39bdd740ce03ae32d81553f675ae81452ff62769393590cfb06d",
+      "media_type": "video",
+      "bytes": 1013,
+      "source_content_type": "video/mp4",
+      "destination_content_type": "video/mp4"
+    },
+    {
+      "lane": "video",
+      "key": "incoming/0003-clip.mp4",
+      "source_sha256": "dc1c1693241e39bdd740ce03ae32d81553f675ae81452ff62769393590cfb06d",
+      "destination_sha256": "dc1c1693241e39bdd740ce03ae32d81553f675ae81452ff62769393590cfb06d",
+      "media_type": "video",
+      "bytes": 1013,
+      "source_content_type": "video/mp4",
+      "destination_content_type": "video/mp4"
+    },
+    {
+      "lane": "video",
+      "key": "incoming/0004-clip.mp4",
+      "source_sha256": "dc1c1693241e39bdd740ce03ae32d81553f675ae81452ff62769393590cfb06d",
+      "destination_sha256": "dc1c1693241e39bdd740ce03ae32d81553f675ae81452ff62769393590cfb06d",
+      "media_type": "video",
+      "bytes": 1013,
+      "source_content_type": "video/mp4",
+      "destination_content_type": "video/mp4"
+    },
+    {
+      "lane": "video",
+      "key": "incoming/0005-clip.mp4",
+      "source_sha256": "dc1c1693241e39bdd740ce03ae32d81553f675ae81452ff62769393590cfb06d",
+      "destination_sha256": "dc1c1693241e39bdd740ce03ae32d81553f675ae81452ff62769393590cfb06d",
+      "media_type": "video",
+      "bytes": 1013,
+      "source_content_type": "video/mp4",
+      "destination_content_type": "video/mp4"
+    },
+    {
+      "lane": "video",
+      "key": "incoming/0006-clip.mp4",
+      "source_sha256": "dc1c1693241e39bdd740ce03ae32d81553f675ae81452ff62769393590cfb06d",
+      "destination_sha256": "dc1c1693241e39bdd740ce03ae32d81553f675ae81452ff62769393590cfb06d",
+      "media_type": "video",
+      "bytes": 1013,
+      "source_content_type": "video/mp4",
+      "destination_content_type": "video/mp4"
+    },
+    {
+      "lane": "video",
+      "key": "incoming/0007-clip.mp4",
+      "source_sha256": "dc1c1693241e39bdd740ce03ae32d81553f675ae81452ff62769393590cfb06d",
+      "destination_sha256": "dc1c1693241e39bdd740ce03ae32d81553f675ae81452ff62769393590cfb06d",
+      "media_type": "video",
+      "bytes": 1013,
+      "source_content_type": "video/mp4",
+      "destination_content_type": "video/mp4"
+    },
+    {
+      "lane": "video",
+      "key": "incoming/0008-clip.mp4",
+      "source_sha256": "dc1c1693241e39bdd740ce03ae32d81553f675ae81452ff62769393590cfb06d",
+      "destination_sha256": "dc1c1693241e39bdd740ce03ae32d81553f675ae81452ff62769393590cfb06d",
+      "media_type": "video",
+      "bytes": 1013,
+      "source_content_type": "video/mp4",
+      "destination_content_type": "video/mp4"
+    },
+    {
+      "lane": "video",
+      "key": "incoming/0009-clip.mp4",
+      "source_sha256": "dc1c1693241e39bdd740ce03ae32d81553f675ae81452ff62769393590cfb06d",
+      "destination_sha256": "dc1c1693241e39bdd740ce03ae32d81553f675ae81452ff62769393590cfb06d",
+      "media_type": "video",
+      "bytes": 1013,
+      "source_content_type": "video/mp4",
+      "destination_content_type": "video/mp4"
+    },
+    {
+      "lane": "video",
+      "key": "incoming/0010-clip.mp4",
+      "source_sha256": "dc1c1693241e39bdd740ce03ae32d81553f675ae81452ff62769393590cfb06d",
+      "destination_sha256": "dc1c1693241e39bdd740ce03ae32d81553f675ae81452ff62769393590cfb06d",
+      "media_type": "video",
+      "bytes": 1013,
+      "source_content_type": "video/mp4",
+      "destination_content_type": "video/mp4"
+    }
+  ],
+  "target_runtime": "Flowbridge bounded continuous S3 polling worker",
+  "zero_downtime_claim": false,
+  "nifi_state_transferred": false,
+  "delivery": "at_least_once",
+  "sanitized_export_sha256": "971f2605d26b8c01607ae8104f22c8546992de4a58c59593b5e50fdb54de80b5",
+  "sanitization": {
+    "removed_empty_sensitive_properties": [],
+    "embedded_credentials": false
+  },
+  "export_path": "examples/nifi-continuous-media.json",
+  "test_environment": {
+    "s3": "Adobe S3Mock 5.1.0",
+    "network": "Docker internal network, no published ports",
+    "memory_limits_mib": 2432,
+    "production": false
+  },
+  "limitations": [
+    "Three bounded latest-object S3 lanes; not arbitrary NiFi graphs.",
+    "Processing is a literal media_type attribute, not media transcoding.",
+    "Controlled source stop and drain with explicit backfill; not zero downtime.",
+    "No NiFi queue or component state migration.",
+    "Synthetic S3Mock data and local test TLS trust, not production TLS or performance certification.",
+    "At-least-once delivery; restart check verifies no unchanged-object reprocessing for this run."
+  ],
+  "test_resources_cleaned_up": true
+}

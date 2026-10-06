@@ -2,6 +2,7 @@
 const $ = id => document.getElementById(id);
 const MAX_BYTES = 2 * 1024 * 1024;
 const descriptions = {
+  "continuous-worker": "Export an executable polling worker for the strict three-lane NiFi S3 profile. Controlled stop/drain and byte reconciliation are required before cutover; new arrivals remain in source storage.",
   airflow: "Generate a paused Airflow DAG for explicitly supported one-shot HTTP and transformation workflows. Streaming semantics and unmapped processors block export.",
   "nifi-upgrade": "Prepare a review-only NiFi 1 to 2 rule plan. This does not produce a validated NiFi 2 flow or change your source.",
   seatunnel: 'Generate a SeaTunnel configuration for the supported flow, with deployment notes and a compatibility report.',
@@ -13,7 +14,7 @@ const descriptions = {
 let preparedRequest = null;
 let busy = false;
 function status(message, error = false) { $('status').textContent = message; $('status').classList.toggle('error', error); }
-function setBusy(value) { busy = value; for (const id of ['analyze-button', 'convert-button', 'example-button', 'http-example-button', 'media-example-button', 'clear-button']) $(id).disabled = value; $('download-button').disabled = value || !$('review-ack').checked || !preparedRequest; $('review-ack').disabled = value; $('source').disabled = value; $('target').disabled = value; $('document').readOnly = value; $('file-input').disabled = value; platformControls(); }
+function setBusy(value) { busy = value; for (const id of ['analyze-button', 'convert-button', 'example-button', 'http-example-button', 'media-example-button', 'continuous-example-button', 'clear-button']) $(id).disabled = value; $('download-button').disabled = value || !$('review-ack').checked || !preparedRequest; $('review-ack').disabled = value; $('source').disabled = value; $('target').disabled = value; $('document').readOnly = value; $('file-input').disabled = value; platformControls(); }
 function invalidate() { preparedRequest = null; $('review-ack').checked = false; $('download-button').disabled = true; $('artifacts').hidden = true; $('report').hidden = true; $('graph-assessment').hidden = true; status($('document').value.trim() ? 'Flow added. Check the source or prepare an export.' : 'Add a flow to begin.'); }
 function requestBody() {
   const raw = $('document').value.trim();
@@ -96,7 +97,7 @@ $('clear-button').addEventListener('click', () => { $('document').value = ''; $(
 $('analyze-button').addEventListener('click', () => run('analyze'));
 $('convert-button').addEventListener('click', () => run('convert'));
 $('review-ack').addEventListener('change', () => { $('download-button').disabled = busy || !$('review-ack').checked || !preparedRequest; });
-$('example-button').addEventListener('click', async () => { if (busy) return; setBusy(true); try { const response = await fetch('/api/example'); if (!response.ok) throw new Error('The example could not be loaded.'); const data = await response.json(); $('document').value = JSON.stringify(data.document || data, null, 2); $('source').value = typeof data.source === 'string' ? data.source : 'auto'; $('file-detail').textContent = 'Example loaded · no credentials included'; invalidate(); } catch (error) { status(error.message, true); } finally { setBusy(false); } });
+$('example-button').addEventListener('click', async () => { if (busy) return; setBusy(true); try { const response = await fetch('/api/example'); if (!response.ok) throw new Error('The example could not be loaded.'); const data = await response.json(); $('document').value = JSON.stringify(data.document || data, null, 2); $('source').value = typeof data.source === 'string' ? data.source : 'auto'; $('target').value = 'seatunnel'; $('target-description').textContent = descriptions.seatunnel; $('batch-contract-label').hidden = true; $('file-detail').textContent = 'Example loaded · no credentials included'; invalidate(); } catch (error) { status(error.message, true); } finally { setBusy(false); } });
 $('download-button').addEventListener('click', async () => {
   if (busy || !preparedRequest || !$('review-ack').checked) return;
   setBusy(true); status('Packaging your project…');
@@ -372,3 +373,31 @@ $('media-example-button').addEventListener('click', async () => {
   } catch (error) { status(error.message,true); }
   finally {setBusy(false);}
 });
+
+$('continuous-example-button').addEventListener('click', async () => {
+  if (busy) return;
+  setBusy(true);
+  try {
+    const response = await fetch('/api/example/continuous');
+    if (!response.ok) throw new Error('The tested native NiFi example is unavailable.');
+    $('document').value = JSON.stringify(await response.json(), null, 2);
+    $('source').value = 'nifi'; $('nifi-version').value = '2'; $('target').value = 'continuous-worker';
+    $('target-description').textContent = descriptions['continuous-worker'];
+    $('batch-contract-label').hidden = true; $('partial-ack').checked = false;
+    $('file-detail').textContent = 'Sanitized native NiFi export from the continuous migration test'; invalidate();
+    status('Native flow loaded. Assess its full inventory, then prepare the continuous-worker export and review the cutover instructions.');
+  } catch (error) { status(error.message, true); }
+  finally { setBusy(false); }
+});
+
+(async () => {
+  try {
+    const response = await fetch('/api/demo/continuous/evidence');
+    if (!response.ok) throw new Error('Evidence unavailable');
+    const evidence = await response.json();
+    $('continuous-proof-data').textContent = JSON.stringify(evidence, null, 2);
+    $('continuous-proof-summary').textContent = evidence.result === 'passed' ? `Recorded run: ${evidence.native_completed_at_drain} files processed by NiFi + ${evidence.target_processed} by the generated worker. ${evidence.total_destination_objects} destination files verified; ${evidence.missing_objects} missing. Arrivals continued during handover. This verifies the tested three-lane metadata-classification mapping, not arbitrary transformations or every target platform.` : 'This recorded run did not pass. Review the evidence before making a migration claim.';
+  } catch {
+    $('continuous-proof-summary').textContent = 'Recorded evidence is unavailable in this deployment. No completed migration is claimed here.';
+  }
+})();

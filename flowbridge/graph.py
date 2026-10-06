@@ -77,7 +77,7 @@ def _validate_json(value):
 
 
 def _public_credential_setting(key, value):
-    if key == 'Use Default Credentials':
+    if key in ('Use Default Credentials', 'Use Anonymous Credentials'):
         return type(value) is bool or isinstance(value, str) and value in ('true', 'false')
     if key == 'AWS Credentials Provider Service':
         return isinstance(value, str) and re.fullmatch(r'[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}', value) is not None

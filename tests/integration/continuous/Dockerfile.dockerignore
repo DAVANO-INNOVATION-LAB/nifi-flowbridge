@@ -1,0 +1,13 @@
+**
+!flowbridge
+!flowbridge/**
+!tests
+!tests/integration
+!tests/integration/media
+!tests/integration/media/fixtures
+!tests/integration/media/fixtures/**
+!tests/integration/continuous
+!tests/integration/continuous/**
+**/__pycache__
+
+!requirements-media.txt

@@ -89,6 +89,10 @@ class Handler(BaseHTTPRequestHandler):
             return self.send(404, {"error": "Not found"})
         if path == "/api/health":
             return self.send(200, {"status": "ok", "version": "0.3.0", "mode": "local"})
+        if path == "/api/example/continuous":
+            return self.send(200, json.loads((ROOT / "examples" / "nifi-continuous-media.json").read_text()))
+        if path == "/api/demo/continuous/evidence":
+            return self.send(200, json.loads((ROOT / "docs" / "continuous-migration-evidence.json").read_text()))
         if path == "/api/example/media":
             return self.send(200, json.loads((ROOT / "examples" / "media-etl.json").read_text()))
         if path == "/api/demo/airgap/evidence":
@@ -163,7 +167,7 @@ class Handler(BaseHTTPRequestHandler):
             source = payload.get("source", "auto")
             target = payload.get("target", "flowbridge")
             formats = ("nifi", "seatunnel", "camel-k", "kafka", "flowbridge")
-            if not isinstance(source, str) or source not in ("auto",) + formats or not isinstance(target, str) or target not in formats + ("airflow", "nifi-upgrade"):
+            if not isinstance(source, str) or source not in ("auto",) + formats or not isinstance(target, str) or target not in formats + ("airflow", "nifi-upgrade", "continuous-worker"):
                 raise ValueError("Unknown format")
             from .service import analyze, assess, convert
             if self.path == "/api/assess":

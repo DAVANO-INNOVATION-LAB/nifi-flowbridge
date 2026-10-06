@@ -62,6 +62,19 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(self.request("GET", "/../flowbridge/server.py")[0], 404)
         self.assertEqual(self.request("POST", "/api/convert", {"document": {}}, {"Content-Type": "text/plain"})[0], 415)
 
+    def test_native_continuous_example_exports_executable_package(self):
+        status, body, _ = self.request("GET", "/api/example/continuous")
+        self.assertEqual(status, 200)
+        document = json.loads(body)
+        status, output, _ = self.request("POST", "/api/convert", {"source": "nifi", "target": "continuous-worker", "nifi_version": "2", "document": document}, {"Content-Type": "application/json"})
+        self.assertEqual(status, 200, output)
+        files = json.loads(output)["files"]
+        self.assertIn("flowbridge/nifi_s3.py", files)
+        self.assertEqual(len(json.loads(files["continuous-s3-profile.json"])["lanes"]), 3)
+        status, output, _ = self.request("POST", "/api/convert", {"source": "nifi", "target": "continuous-worker", "nifi_version": "3", "document": document}, {"Content-Type": "application/json"})
+        self.assertEqual(status, 422)
+        self.assertFalse(json.loads(output).get("files"))
+
     def test_demo_video_supports_browser_seeking(self):
         status, body, headers = self.request("GET", "/demo.mp4", headers={"Range": "bytes=0-31"})
         self.assertEqual(status, 206)
