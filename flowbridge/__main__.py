@@ -15,8 +15,10 @@ def main():
         p.add_argument("--source", default="auto", choices=["auto", "nifi", "seatunnel", "camel-k", "kafka", "flowbridge"])
         p.add_argument("--nifi-version", default="auto")
         if command == "convert":
-            p.add_argument("--one-shot-batch", action="store_true", help="Acknowledge conversion to a manually triggered one-shot Airflow workflow")
-            p.add_argument("--target", required=True, choices=["nifi", "seatunnel", "camel-k", "kafka", "flowbridge", "airflow", "nifi-upgrade", "continuous-worker", "s3-fleet"])
+            scheduling = p.add_mutually_exclusive_group()
+            scheduling.add_argument("--scheduled-microbatch", action="store_true", help="Acknowledge Airflow one-minute S3 microbatch scheduling")
+            scheduling.add_argument("--one-shot-batch", action="store_true", help="Acknowledge conversion to a manually triggered one-shot Airflow workflow")
+            p.add_argument("--target", required=True, choices=["nifi", "seatunnel", "camel-k", "kafka", "flowbridge", "airflow", "nifi-upgrade", "continuous-worker", "s3-fleet", "airflow-s3", "camel-k-s3"])
             p.add_argument("--output", type=Path, required=True)
             p.add_argument("--accept-warnings", action="store_true", help="Export review artifacts despite compatibility warnings")
     serve = sub.add_parser("serve")
@@ -35,7 +37,7 @@ def main():
             result = assess(data, args.source, args.nifi_version)
             print(json.dumps(result, indent=2))
             return 0 if result["report"]["ok"] else 2
-        result = analyze(data, args.source) if args.command == "analyze" else convert(data, args.source, args.target, batch_contract={"mode":"one_shot","acknowledge_scheduling_change":True} if args.one_shot_batch else None, nifi_version=args.nifi_version)
+        result = analyze(data, args.source) if args.command == "analyze" else convert(data, args.source, args.target, batch_contract={"mode":"scheduled_microbatch" if args.scheduled_microbatch else "one_shot","acknowledge_scheduling_change":True} if args.one_shot_batch or args.scheduled_microbatch else None, nifi_version=args.nifi_version)
         print(json.dumps(result["report"], indent=2))
         if not result["report"]["ok"]:
             return 2

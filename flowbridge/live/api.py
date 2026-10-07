@@ -35,6 +35,9 @@ def manager():
 
 def dispatch(path, payload):
     from .jobs import MigrationError
+    if path.startswith("/api/live/native/"):
+        from .native import dispatch as native_dispatch
+        return native_dispatch(path.rsplit("/", 1)[-1], payload)
     if path == "/api/live/assess":
         return manager().assess(payload)
     if path == "/api/live/start":

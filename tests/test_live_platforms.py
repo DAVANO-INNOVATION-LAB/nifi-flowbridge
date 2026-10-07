@@ -16,6 +16,16 @@ class Response(io.BytesIO):
     headers = {}
 
 class PlatformTests(unittest.TestCase):
+    def test_unsupported_mutation_methods_rejected(self):
+        client=JsonClient('https://example.com')
+        with self.assertRaises(PlatformError):client.request('DELETE','/resource')
+
+    def test_explicit_put_uses_verified_transport(self):
+        client=JsonClient('https://example.com')
+        with patch.object(client._opener,'open',return_value=Response(b'{}')) as request:
+            client.request('PUT','/processors/example/run-status',{'state':'STOPPED'})
+            self.assertEqual(request.call_args.args[0].method,'PUT')
+
     def test_invalid_urls(self):
         for url in ['file:///tmp/data','https://user:pass@example.com','https://example.com?token=x','https://example.com/#x','http://example.com','https://example.com/../x','https://example.com/%2e%2e/x','https://example.com\\@evil.com','https://example.com\n']:
             with self.subTest(url=url), self.assertRaises(PlatformError): JsonClient(url)

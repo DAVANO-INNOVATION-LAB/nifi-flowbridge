@@ -1,0 +1,114 @@
+{
+  "schema": "flowbridge/native-camel-k-proof/v1",
+  "status": "passed",
+  "recorded_at": "2026-10-07T12:49:05.811371+00:00",
+  "source": "Actual NiFi 2.12.0 REST-created and exported three nested S3 lanes: ListS3 \u2192 FetchS3Object \u2192 literal UpdateAttribute \u2192 PutS3Object",
+  "target": "Native generated Java Camel routes reconciled and executed by the actual Camel K operator in Kubernetes; no Python data-plane worker",
+  "runtime": {
+    "camel_k": "2.11.0",
+    "kubernetes": "kind v1.33.4 arm64",
+    "camel": "4.22.0",
+    "camel_quarkus": "3.39.0",
+    "quarkus": "3.39.1",
+    "java": "17.0.20",
+    "s3_fixture": "adobe/s3mock:5.1.0",
+    "integration_phase": "Running",
+    "runtime_provider": "plain-quarkus",
+    "runtime_version": "3.39.1"
+  },
+  "source_fence": {
+    "adapter": "flowbridge.live.nifi_fence.NiFiFence",
+    "stop_and_drain_passed": true,
+    "revalidate_passed": true,
+    "processors": 12,
+    "all_stopped": true,
+    "queued_flowfiles": 0,
+    "active_threads": 0,
+    "source_container_stopped_after_fence": true
+  },
+  "reconciliation": {
+    "lanes": [
+      {
+        "media_type": "image",
+        "source_objects": 291,
+        "target_objects": 291,
+        "target_versions": 293,
+        "matched": 291,
+        "checksum_set_sha256": "091264ca460bb9a884ebca911fece13009639602709b77196d36ff19bfe8f308",
+        "content_types_equal": true,
+        "media_type_metadata_equal": true
+      },
+      {
+        "media_type": "text",
+        "source_objects": 290,
+        "target_objects": 290,
+        "target_versions": 292,
+        "matched": 290,
+        "checksum_set_sha256": "1487b276bf05e88d24445489f7983efcee223415c20049b6e0073aff0f83aef3",
+        "content_types_equal": true,
+        "media_type_metadata_equal": true
+      },
+      {
+        "media_type": "video",
+        "source_objects": 290,
+        "target_objects": 290,
+        "target_versions": 292,
+        "matched": 290,
+        "checksum_set_sha256": "b55d9ef4315a9d0fc0bdb67eb7916fadde2481ffcce564dcd30351440ab1e9b8",
+        "content_types_equal": true,
+        "media_type_metadata_equal": true
+      }
+    ],
+    "objects": 871,
+    "target_objects": 871,
+    "target_versions": 877
+  },
+  "native_source_objects": 6,
+  "continuing_arrivals_during_target_build": 864,
+  "restart": {
+    "method": "Kubernetes deployment rollout restart with same PVC",
+    "before_objects": 870,
+    "after_objects": 870,
+    "before_destination_versions": 876,
+    "after_destination_versions": 876,
+    "new_versions": 0
+  },
+  "negative_case": {
+    "bytes": 67108865,
+    "configured_bound": 67108864,
+    "native_error": "object_size_bound",
+    "source_retained": true,
+    "target_absent": true,
+    "healthy_object_while_oversized_present": {
+      "same_lane": true,
+      "copied": true,
+      "bytes_and_media_type_equal": true
+    }
+  },
+  "artifact_sha256": {
+    "FlowbridgeS3.java": "b99616362992cc40b907fc2dc7e50fd00dbca166fa8357cb44fe9088983aeb50",
+    "camel-k-integration.json": "72dbbbb3e39f5dab5148585a948d57983a560c4b0ab7d98cde742968ff842200",
+    "state-pvc.json": "e64f4d0ad9a63e1c121a2714624b3c6412f97f4fd6375e048f36ca16cfca9c8b",
+    "source-profile.json": "959539d81083e3fa38adfb881c912881e0d0287b9459ffec0e9bc8db70f22f88",
+    "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "README.md": "b4c644a5a6ba505fa42f9479de9c0cd34803bfb7d0125e6e85ccde930afaa2c7"
+  },
+  "native_document_sha256": "5bd69b4810b2db2a970ef690a7c7553a387dcfda4362789eeac5bbdf30d9c3e5",
+  "test_deployment_overrides": [
+    "Synthetic-only AWS environment credentials",
+    "512 MiB JVM ceiling",
+    "Local registry and fixture endpoint Services",
+    "Builder resource limits"
+  ],
+  "limitations": [
+    "Bounded 1\u20133 independent lanes; not arbitrary NiFi graph migration.",
+    "Actual kind Kubernetes proof; not OpenShift certification.",
+    "Synthetic S3 endpoints and credentials, not production IAM or TLS validation.",
+    "At-least-once retained-source backfill; six initial native objects were rewritten once. Native NiFi listing state was not imported.",
+    "Arrivals continued while target built, so backlog and deployment delay existed; zero downtime is not claimed.",
+    "64 MiB object bound and 10,000 persistent identities per lane.",
+    "Single owner, single replica, persistent PVC. No distributed ownership or automatic production promotion.",
+    "Source fence is an observation; an external operator could restart NiFi."
+  ],
+  "cleanup": "Dedicated runtime fixtures removed after evidence capture"
+}

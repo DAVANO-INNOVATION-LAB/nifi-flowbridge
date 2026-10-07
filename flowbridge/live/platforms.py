@@ -79,7 +79,7 @@ class JsonClient:
                                                    urllib.request.HTTPSHandler(context=context), _NoRedirect())
 
     def request(self, method, path, document=None, query=None):
-        if method not in ('GET', 'POST') or not isinstance(path, str) or not path.startswith('/') or path.startswith('//') or '?' in path or '#' in path or '\\' in path or any(p in ('.', '..') for p in urllib.parse.unquote(path).split('/')):
+        if method not in ('GET', 'POST', 'PUT') or not isinstance(path, str) or not path.startswith('/') or path.startswith('//') or '?' in path or '#' in path or '\\' in path or any(p in ('.', '..') for p in urllib.parse.unquote(path).split('/')):
             fail('invalid_request', 'Unsupported platform request.')
         url = self._base + path
         if query:

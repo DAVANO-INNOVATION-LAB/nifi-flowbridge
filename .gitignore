@@ -12,3 +12,4 @@ local-output/
 *.db
 *.db-wal
 *.db-shm
+state/

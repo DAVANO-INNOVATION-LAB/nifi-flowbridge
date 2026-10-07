@@ -2,6 +2,8 @@
 const $ = id => document.getElementById(id);
 const MAX_BYTES = 2 * 1024 * 1024;
 const descriptions = {
+  "airflow-s3": "Paused one-minute S3 microbatches with durable per-lane checkpoints. Explicit stop/drain and baseline reconciliation precede execution.",
+  "camel-k-s3": "Native Camel K AWS S3 routes for the supported one-to-three-lane profile. Persistent idempotency storage and source fencing are required.",
   "s3-fleet": "Export mapped S3 pipelines from the full NiFi estate. Unsupported dependencies block the package; assessment alone does not approve deployment or cutover.",
   "continuous-worker": "Export an executable polling worker for the strict three-lane NiFi S3 profile. Controlled stop/drain and byte reconciliation are required before cutover; new arrivals remain in source storage.",
   airflow: "Generate a paused Airflow DAG for explicitly supported one-shot HTTP and transformation workflows. Streaming semantics and unmapped processors block export.",
@@ -23,7 +25,7 @@ function requestBody() {
   if (new TextEncoder().encode(raw).length > MAX_BYTES) throw new Error('This document exceeds the 2 MB limit.');
   let document; try { document = raw.startsWith('<') ? raw : JSON.parse(raw); } catch { throw new Error('This is not valid JSON or NiFi XML. Check the document and try again.'); }
   if (!document || (typeof document !== 'object' && typeof document !== 'string') || Array.isArray(document)) throw new Error('The flow document must be a JSON object.');
-  return { source: $('source').value, target: $('target').value, document, nifi_version: $('nifi-version').value, allow_partial: $('partial-ack').checked, batch_contract: $('batch-contract').checked ? {mode:'one_shot',acknowledge_scheduling_change:true} : null };
+  return { source: $('source').value, target: $('target').value, document, nifi_version: $('nifi-version').value, allow_partial: $('partial-ack').checked, batch_contract: $('batch-contract').checked ? {mode:$('target').value === 'airflow-s3' ? 'scheduled_microbatch' : 'one_shot',acknowledge_scheduling_change:true} : null };
 }
 async function jsonRequest(path, body) {
   const controller = new AbortController();
@@ -100,7 +102,7 @@ $('source').addEventListener('change', invalidate);
 $('nifi-version').addEventListener('change', invalidate);
 $('batch-contract').addEventListener('change', invalidate);
 $('partial-ack').addEventListener('change', invalidate);
-$('target').addEventListener('change', () => { $('target-description').textContent = descriptions[$('target').value]; $('batch-contract-label').hidden = $('target').value !== 'airflow'; invalidate(); });
+$('target').addEventListener('change', () => { $('target-description').textContent = descriptions[$('target').value]; $('batch-contract-label').hidden = !['airflow','airflow-s3'].includes($('target').value); invalidate(); });
 $('clear-button').addEventListener('click', () => { $('document').value = ''; $('file-input').value = ''; $('file-detail').textContent = 'Up to 2 MB · processed on this local server'; invalidate(); $('document').focus(); });
 $('analyze-button').addEventListener('click', () => run('analyze'));
 $('convert-button').addEventListener('click', () => run('convert'));
@@ -153,14 +155,14 @@ function liveConnection(side) {
   if (value.security_protocol === 'SASL_SSL') { value.username = $(prefix + 'username').value; value.password = $(prefix + 'password').value; value.sasl_mechanism = $(prefix + 'mechanism').value; }
   return value;
 }
-async function liveRequest(path, payload) {
+async function liveRequest(path, payload, signal) {
   const token = $('live-token').value.trim();
   if (!token) throw new Error('Enter the owner access token to use connected migration.');
-  const options = {method: payload === undefined ? 'GET' : 'POST', headers: {Authorization: `Bearer ${token}`}, cache: 'no-store'};
+  const options = {method: payload === undefined ? 'GET' : 'POST', headers: {Authorization: `Bearer ${token}`}, cache: 'no-store', signal};
   if (payload !== undefined) { options.headers['Content-Type'] = 'application/json'; options.body = JSON.stringify(payload); }
   const response = await fetch(path, options);
   const data = await response.json().catch(() => null);
-  if (!response.ok) { if (data?.report && !path.includes('/platform/')) showLiveReport(data.report); throw new Error(errorMessage(data?.error) || (response.status === 401 || response.status === 403 ? 'The owner token was not accepted.' : `Connected migration request failed (${response.status}).`)); }
+  if (!response.ok) { if (data?.report && !path.includes('/platform/') && !path.includes('/native/')) showLiveReport(data.report); throw new Error(errorMessage(data?.error) || (response.status === 401 || response.status === 403 ? 'The owner token was not accepted.' : `Connected migration request failed (${response.status}).`)); }
   if (!data) throw new Error('The server returned an unreadable response.');
   return data;
 }
@@ -432,3 +434,53 @@ $('fleet-assess').addEventListener('click',async()=>{
   }catch(error){$('fleet-status').textContent=error.name==='AbortError' ? 'Assessment timed out. Retry when the local server responds.' : error.message || 'Cannot reach the local server. Your source remains in the editor.';}
   finally{clearTimeout(timer);setBusy(false);}
 });
+
+// Native target controls use the same authenticated, bounded platform transport.
+let nativeBusy = false;
+let nativeProof = null;
+const nativeScopes = {
+  kafka: 'Kafka record transfer and guarded consumer-offset cutover.',
+  seatunnel: 'SeaTunnel native Kafka transport jobs. Offset boundaries require a stopped and drained NiFi source; unsupported transformations block conversion.',
+  'camel-k': 'Camel K native S3 routes. One to three independent lanes, persistent idempotency state and source stop/drain are required.',
+  airflow: 'Airflow S3 scheduled microbatches. The generated DAG uses bounded lane tasks and persistent checkpoints; it is not a streaming engine.'
+};
+$('migration-runtime').addEventListener('change',()=>{
+  const target=$('migration-runtime').value;
+  $('kafka-migration').hidden=target!=='kafka';$('native-migration').hidden=target==='kafka';
+  $('native-batch-label').hidden=target!=='airflow';$('migration-scope').textContent=nativeScopes[target];
+  $('native-result').hidden=true;$('native-batch').checked=false;$('native-fence-ack').checked=false;nativeProof=null;$('native-revalidate').disabled=true;
+  $('native-status').textContent='Connect both runtimes and assess the source before handover.';
+});
+async function nativeOperation(operation) {
+  if(nativeBusy || busy || platformBusy)return;
+  const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),60000);
+  try {
+    if(!liveEnabled)throw new Error('Connected operations require enabled live mode.');
+    if($('platform-kind').value!=='nifi')throw new Error('Select Apache NiFi in Connected import and enter its endpoint and process group.');
+    const target=$('migration-runtime').value;
+    const source=platformPayload();
+    if(operation==='fence' && !$('native-fence-ack').checked)throw new Error('Review and authorize the source stop/drain action first.');
+    for(const form of ['platform-form','native-migration'])for(const control of $(form).querySelectorAll('input,select'))control.disabled=true;
+    nativeBusy=true;platformBusy=true;setBusy(true);$('native-fence').disabled=true;$('native-revalidate').disabled=true;$('native-inspect').disabled=true;$('native-prepare').disabled=true;$('migration-runtime').disabled=true;
+    $('native-result').hidden=true;$('native-status').textContent='Checking the connected runtime…';
+    const result=await liveRequest('/api/live/native/'+operation,{source,target,acknowledge:$('native-fence-ack').checked,proof_id:nativeProof,destination:{url:$('native-url').value.trim(),bearer_token:$('native-bearer').value,resource:$('native-resource').value.trim(),namespace:$('native-namespace').value.trim(),allow_http_loopback:$('platform-loopback').checked},batch_contract:$('native-batch').checked?{mode:'scheduled_microbatch',acknowledge_scheduling_change:true}:null},controller.signal);
+    if(operation==='fence' && result.proof_id){nativeProof=result.proof_id;$('native-fence-ack').checked=false;}
+    if(operation==='prepare' && result.document){
+      $('document').value=JSON.stringify(result.document,null,2);$('source').value='nifi';$('nifi-version').value='2';$('target').value=result.export_target;
+      $('batch-contract').checked=$('native-batch').checked;$('batch-contract-label').hidden=result.export_target!=='airflow-s3';
+      $('target-description').textContent=descriptions[result.export_target];invalidate();
+      setBusy(false);await run('convert');
+    }
+    $('native-result').textContent=JSON.stringify(safeLiveSummary(result.summary || result),null,2);$('native-result').hidden=false;
+    $('native-status').textContent=operation==='fence'?'NiFi stopped and drained. The destination has not started; recheck the source fence before handover.':operation==='revalidate'?'Source remains stopped and drained. Destination reconciliation and ownership checks are still required.':result.cutover_ready===true?'Review target-specific handover checks.':'Checks returned. Production cutover is not approved; review the findings.';
+  }catch(error){$('native-status').textContent=error.name==='AbortError'?'The request timed out. A source stop may still be finishing; inspect NiFi before retrying.':error.message || 'The connected operation failed.';}
+  finally{clearTimeout(timer);platformBusy=false;setBusy(false);for(const form of ['platform-form','native-migration'])for(const control of $(form).querySelectorAll('input,select'))control.disabled=false;nativeBusy=false;$('native-fence').disabled=false;$('native-revalidate').disabled=!nativeProof;$('native-inspect').disabled=false;$('native-prepare').disabled=false;$('migration-runtime').disabled=false;$('native-bearer').value='';$('platform-bearer').value='';}
+}
+$('native-inspect').addEventListener('click',()=>nativeOperation('inspect'));
+$('native-prepare').addEventListener('click',()=>nativeOperation('prepare'));
+window.addEventListener('pagehide',()=>{$('native-bearer').value='';});
+
+$('native-fence').addEventListener('click',()=>nativeOperation('fence'));
+$('native-revalidate').addEventListener('click',()=>nativeOperation('revalidate'));
+
+for(const id of ['platform-kind','platform-url','platform-group','native-url','native-resource','native-namespace']) $(id).addEventListener('input',()=>{nativeProof=null;$('native-revalidate').disabled=true;$('native-fence-ack').checked=false;$('native-result').hidden=true;});

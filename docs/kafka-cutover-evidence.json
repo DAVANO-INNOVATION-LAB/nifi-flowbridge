@@ -1,0 +1,25 @@
+{
+  "result": "passed",
+  "http_live_migration": true,
+  "http_copied": 3,
+  "copied": 6,
+  "target_records": 8,
+  "partitions": 2,
+  "checks": [
+    "initial copy",
+    "live tail",
+    "binary keys and values",
+    "empty value",
+    "tombstone",
+    "duplicate and null headers",
+    "timestamps",
+    "partition preservation",
+    "pre-existing target record retention",
+    "target offset translation",
+    "source offsets unchanged"
+  ],
+  "delivery": "at_least_once",
+  "recorded_at": "2026-10-07T12:50:42.514701+00:00",
+  "broker_runtime": "Apache Kafka 4.2.0",
+  "scope": "Two isolated brokers; Flowbridge transfer coordinator and authenticated HTTP API. This is not a NiFi processor-state transfer or a Kafka Streams runtime execution."
+}

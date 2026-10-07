@@ -1,0 +1,732 @@
+{
+  "result": "passed",
+  "recorded_at": "2026-10-07T12:15:26.742974+00:00",
+  "source_runtime": "Apache NiFi 2.12.0",
+  "source_export_sha256": "fc9371f7a3fbfb7e0b9488a4f98aea890036fb89ad67c106dac095b7b18fa5e8",
+  "exported_files": [
+    "LICENSE",
+    "README.md",
+    "dags/flowbridge_s3.py",
+    "flowbridge/__init__.py",
+    "flowbridge/nifi_s3.py",
+    "flowbridge/targets/__init__.py",
+    "flowbridge/targets/airflow.py",
+    "prepare_airflow_cutover.py",
+    "requirements.txt",
+    "s3-profile.json"
+  ],
+  "generated_module_executed": true,
+  "unsupported_processor_rejected": true,
+  "native_processors": 12,
+  "native_connections": 9,
+  "native_groups": 4,
+  "native_processing": "literal media_type attribute persisted in destination S3 metadata",
+  "source_s3_endpoints": 1,
+  "destination_s3_endpoints": 1,
+  "lanes": 3,
+  "native_completed_before_export": 6,
+  "native_completed_at_drain": 6,
+  "baseline": [
+    {
+      "verified_existing": 2,
+      "pending_backfill": 6,
+      "source_state_imported": false
+    },
+    {
+      "verified_existing": 2,
+      "pending_backfill": 6,
+      "source_state_imported": false
+    },
+    {
+      "verified_existing": 2,
+      "pending_backfill": 6,
+      "source_state_imported": false
+    }
+  ],
+  "airflow_runs": [
+    {
+      "state": "success",
+      "tasks": [
+        {
+          "id": "lane_f28aee74afabec58",
+          "state": "success"
+        },
+        {
+          "id": "lane_4ede3fca0f5795e3",
+          "state": "success"
+        },
+        {
+          "id": "lane_1ebc4a7e41077255",
+          "state": "success"
+        }
+      ],
+      "processed": 25,
+      "run_id": "manual__2026-10-07T12:15:15.507367+00:00"
+    },
+    {
+      "state": "success",
+      "tasks": [
+        {
+          "id": "lane_f28aee74afabec58",
+          "state": "success"
+        },
+        {
+          "id": "lane_4ede3fca0f5795e3",
+          "state": "success"
+        },
+        {
+          "id": "lane_1ebc4a7e41077255",
+          "state": "success"
+        }
+      ],
+      "processed": 11,
+      "run_id": "manual__2026-10-07T12:15:20.850971+00:00"
+    },
+    {
+      "state": "success",
+      "tasks": [
+        {
+          "id": "lane_f28aee74afabec58",
+          "state": "success"
+        },
+        {
+          "id": "lane_4ede3fca0f5795e3",
+          "state": "success"
+        },
+        {
+          "id": "lane_1ebc4a7e41077255",
+          "state": "success"
+        }
+      ],
+      "processed": 0,
+      "run_id": "manual__2026-10-07T12:15:24.070461+00:00"
+    }
+  ],
+  "pre_cutover_run": {
+    "state": "failed",
+    "tasks": [
+      {
+        "id": "lane_f28aee74afabec58",
+        "state": "failed"
+      },
+      {
+        "id": "lane_4ede3fca0f5795e3",
+        "state": "failed"
+      },
+      {
+        "id": "lane_1ebc4a7e41077255",
+        "state": "failed"
+      }
+    ],
+    "processed": 0,
+    "run_id": "manual__2026-10-07T12:15:12.199167+00:00"
+  },
+  "airflow_version": "3.1.8",
+  "boto3_version": "1.42.61",
+  "scheduler_execution": false,
+  "dag_test_execution": true,
+  "microbatch_interval_seconds": 60,
+  "target_processed": 36,
+  "total_produced": 42,
+  "total_destination_objects": 42,
+  "missing_objects": 0,
+  "hashes_matched": true,
+  "processing_metadata_matched": true,
+  "content_types_matched": true,
+  "worker_restart_repeat_processed": 0,
+  "arrivals_continued_during_handoff": true,
+  "timeline": [
+    {
+      "phase": "native_running",
+      "timestamp": "2026-10-07T12:15:06.261287+00:00",
+      "elapsed_seconds": 0.363,
+      "producer_generated": 0,
+      "source_objects": 0,
+      "destination_objects": 0,
+      "processing": "literal media_type attribute persisted as S3 user metadata"
+    },
+    {
+      "phase": "exported",
+      "timestamp": "2026-10-07T12:15:09.187396+00:00",
+      "elapsed_seconds": 3.289,
+      "producer_generated": 9,
+      "source_objects": 9,
+      "destination_objects": 6,
+      "native_destination_objects": 6
+    },
+    {
+      "phase": "airflow_packaged",
+      "timestamp": "2026-10-07T12:15:09.222026+00:00",
+      "elapsed_seconds": 3.324,
+      "producer_generated": 9,
+      "source_objects": 9,
+      "destination_objects": 6,
+      "dag_id": "flowbridge_s3_13d59f3be15fad40"
+    },
+    {
+      "phase": "source_stop_requested",
+      "timestamp": "2026-10-07T12:15:09.248039+00:00",
+      "elapsed_seconds": 3.35,
+      "producer_generated": 9,
+      "source_objects": 9,
+      "destination_objects": 6
+    },
+    {
+      "phase": "nifi_drained",
+      "timestamp": "2026-10-07T12:15:09.492955+00:00",
+      "elapsed_seconds": 3.595,
+      "producer_generated": 9,
+      "source_objects": 9,
+      "destination_objects": 6,
+      "queued_flowfiles": 0,
+      "active_threads": 0,
+      "native_destination_objects": 6
+    },
+    {
+      "phase": "handoff_arrivals",
+      "timestamp": "2026-10-07T12:15:11.508747+00:00",
+      "elapsed_seconds": 5.611,
+      "producer_generated": 15,
+      "source_objects": 15,
+      "destination_objects": 6
+    },
+    {
+      "phase": "airflow_pre_cutover_rejected",
+      "timestamp": "2026-10-07T12:15:14.597452+00:00",
+      "elapsed_seconds": 8.699,
+      "producer_generated": 24,
+      "source_objects": 24,
+      "destination_objects": 6
+    },
+    {
+      "phase": "baseline_verified",
+      "timestamp": "2026-10-07T12:15:14.889821+00:00",
+      "elapsed_seconds": 8.992,
+      "producer_generated": 24,
+      "source_objects": 24,
+      "destination_objects": 6,
+      "baseline": [
+        {
+          "verified_existing": 2,
+          "pending_backfill": 6,
+          "source_state_imported": false
+        },
+        {
+          "verified_existing": 2,
+          "pending_backfill": 6,
+          "source_state_imported": false
+        },
+        {
+          "verified_existing": 2,
+          "pending_backfill": 6,
+          "source_state_imported": false
+        }
+      ]
+    },
+    {
+      "phase": "airflow_batch_complete",
+      "timestamp": "2026-10-07T12:15:18.195329+00:00",
+      "elapsed_seconds": 12.297,
+      "producer_generated": 36,
+      "source_objects": 36,
+      "destination_objects": 31,
+      "dag_run": {
+        "state": "success",
+        "tasks": [
+          {
+            "id": "lane_f28aee74afabec58",
+            "state": "success"
+          },
+          {
+            "id": "lane_4ede3fca0f5795e3",
+            "state": "success"
+          },
+          {
+            "id": "lane_1ebc4a7e41077255",
+            "state": "success"
+          }
+        ],
+        "processed": 25,
+        "run_id": "manual__2026-10-07T12:15:15.507367+00:00"
+      }
+    },
+    {
+      "phase": "later_arrivals",
+      "timestamp": "2026-10-07T12:15:20.211399+00:00",
+      "elapsed_seconds": 14.313,
+      "producer_generated": 42,
+      "source_objects": 42,
+      "destination_objects": 31
+    },
+    {
+      "phase": "airflow_final_batch",
+      "timestamp": "2026-10-07T12:15:23.448277+00:00",
+      "elapsed_seconds": 17.55,
+      "producer_generated": 42,
+      "source_objects": 42,
+      "destination_objects": 42,
+      "dag_run": {
+        "state": "success",
+        "tasks": [
+          {
+            "id": "lane_f28aee74afabec58",
+            "state": "success"
+          },
+          {
+            "id": "lane_4ede3fca0f5795e3",
+            "state": "success"
+          },
+          {
+            "id": "lane_1ebc4a7e41077255",
+            "state": "success"
+          }
+        ],
+        "processed": 11,
+        "run_id": "manual__2026-10-07T12:15:20.850971+00:00"
+      }
+    },
+    {
+      "phase": "reconciliation_complete",
+      "timestamp": "2026-10-07T12:15:26.729593+00:00",
+      "elapsed_seconds": 20.832,
+      "producer_generated": 42,
+      "source_objects": 42,
+      "destination_objects": 42,
+      "matched_objects": 42,
+      "missing_objects": 0,
+      "unchanged_repeat_processed": 0
+    }
+  ],
+  "objects": [
+    {
+      "lane": "image",
+      "key": "incoming/0000-image.png",
+      "source_sha256": "4371149be76808ede2e39736bd07c9a9209f1d6207cfb3a530c7a2e84ab1a5a2",
+      "destination_sha256": "4371149be76808ede2e39736bd07c9a9209f1d6207cfb3a530c7a2e84ab1a5a2",
+      "media_type": "image",
+      "bytes": 69,
+      "source_content_type": "image/png",
+      "destination_content_type": "image/png"
+    },
+    {
+      "lane": "image",
+      "key": "incoming/0001-image.png",
+      "source_sha256": "4371149be76808ede2e39736bd07c9a9209f1d6207cfb3a530c7a2e84ab1a5a2",
+      "destination_sha256": "4371149be76808ede2e39736bd07c9a9209f1d6207cfb3a530c7a2e84ab1a5a2",
+      "media_type": "image",
+      "bytes": 69,
+      "source_content_type": "image/png",
+      "destination_content_type": "image/png"
+    },
+    {
+      "lane": "image",
+      "key": "incoming/0002-image.png",
+      "source_sha256": "4371149be76808ede2e39736bd07c9a9209f1d6207cfb3a530c7a2e84ab1a5a2",
+      "destination_sha256": "4371149be76808ede2e39736bd07c9a9209f1d6207cfb3a530c7a2e84ab1a5a2",
+      "media_type": "image",
+      "bytes": 69,
+      "source_content_type": "image/png",
+      "destination_content_type": "image/png"
+    },
+    {
+      "lane": "image",
+      "key": "incoming/0003-image.png",
+      "source_sha256": "4371149be76808ede2e39736bd07c9a9209f1d6207cfb3a530c7a2e84ab1a5a2",
+      "destination_sha256": "4371149be76808ede2e39736bd07c9a9209f1d6207cfb3a530c7a2e84ab1a5a2",
+      "media_type": "image",
+      "bytes": 69,
+      "source_content_type": "image/png",
+      "destination_content_type": "image/png"
+    },
+    {
+      "lane": "image",
+      "key": "incoming/0004-image.png",
+      "source_sha256": "4371149be76808ede2e39736bd07c9a9209f1d6207cfb3a530c7a2e84ab1a5a2",
+      "destination_sha256": "4371149be76808ede2e39736bd07c9a9209f1d6207cfb3a530c7a2e84ab1a5a2",
+      "media_type": "image",
+      "bytes": 69,
+      "source_content_type": "image/png",
+      "destination_content_type": "image/png"
+    },
+    {
+      "lane": "image",
+      "key": "incoming/0005-image.png",
+      "source_sha256": "4371149be76808ede2e39736bd07c9a9209f1d6207cfb3a530c7a2e84ab1a5a2",
+      "destination_sha256": "4371149be76808ede2e39736bd07c9a9209f1d6207cfb3a530c7a2e84ab1a5a2",
+      "media_type": "image",
+      "bytes": 69,
+      "source_content_type": "image/png",
+      "destination_content_type": "image/png"
+    },
+    {
+      "lane": "image",
+      "key": "incoming/0006-image.png",
+      "source_sha256": "4371149be76808ede2e39736bd07c9a9209f1d6207cfb3a530c7a2e84ab1a5a2",
+      "destination_sha256": "4371149be76808ede2e39736bd07c9a9209f1d6207cfb3a530c7a2e84ab1a5a2",
+      "media_type": "image",
+      "bytes": 69,
+      "source_content_type": "image/png",
+      "destination_content_type": "image/png"
+    },
+    {
+      "lane": "image",
+      "key": "incoming/0007-image.png",
+      "source_sha256": "4371149be76808ede2e39736bd07c9a9209f1d6207cfb3a530c7a2e84ab1a5a2",
+      "destination_sha256": "4371149be76808ede2e39736bd07c9a9209f1d6207cfb3a530c7a2e84ab1a5a2",
+      "media_type": "image",
+      "bytes": 69,
+      "source_content_type": "image/png",
+      "destination_content_type": "image/png"
+    },
+    {
+      "lane": "image",
+      "key": "incoming/0008-image.png",
+      "source_sha256": "4371149be76808ede2e39736bd07c9a9209f1d6207cfb3a530c7a2e84ab1a5a2",
+      "destination_sha256": "4371149be76808ede2e39736bd07c9a9209f1d6207cfb3a530c7a2e84ab1a5a2",
+      "media_type": "image",
+      "bytes": 69,
+      "source_content_type": "image/png",
+      "destination_content_type": "image/png"
+    },
+    {
+      "lane": "image",
+      "key": "incoming/0009-image.png",
+      "source_sha256": "4371149be76808ede2e39736bd07c9a9209f1d6207cfb3a530c7a2e84ab1a5a2",
+      "destination_sha256": "4371149be76808ede2e39736bd07c9a9209f1d6207cfb3a530c7a2e84ab1a5a2",
+      "media_type": "image",
+      "bytes": 69,
+      "source_content_type": "image/png",
+      "destination_content_type": "image/png"
+    },
+    {
+      "lane": "image",
+      "key": "incoming/0010-image.png",
+      "source_sha256": "4371149be76808ede2e39736bd07c9a9209f1d6207cfb3a530c7a2e84ab1a5a2",
+      "destination_sha256": "4371149be76808ede2e39736bd07c9a9209f1d6207cfb3a530c7a2e84ab1a5a2",
+      "media_type": "image",
+      "bytes": 69,
+      "source_content_type": "image/png",
+      "destination_content_type": "image/png"
+    },
+    {
+      "lane": "image",
+      "key": "incoming/0011-image.png",
+      "source_sha256": "4371149be76808ede2e39736bd07c9a9209f1d6207cfb3a530c7a2e84ab1a5a2",
+      "destination_sha256": "4371149be76808ede2e39736bd07c9a9209f1d6207cfb3a530c7a2e84ab1a5a2",
+      "media_type": "image",
+      "bytes": 69,
+      "source_content_type": "image/png",
+      "destination_content_type": "image/png"
+    },
+    {
+      "lane": "image",
+      "key": "incoming/0012-image.png",
+      "source_sha256": "4371149be76808ede2e39736bd07c9a9209f1d6207cfb3a530c7a2e84ab1a5a2",
+      "destination_sha256": "4371149be76808ede2e39736bd07c9a9209f1d6207cfb3a530c7a2e84ab1a5a2",
+      "media_type": "image",
+      "bytes": 69,
+      "source_content_type": "image/png",
+      "destination_content_type": "image/png"
+    },
+    {
+      "lane": "image",
+      "key": "incoming/0013-image.png",
+      "source_sha256": "4371149be76808ede2e39736bd07c9a9209f1d6207cfb3a530c7a2e84ab1a5a2",
+      "destination_sha256": "4371149be76808ede2e39736bd07c9a9209f1d6207cfb3a530c7a2e84ab1a5a2",
+      "media_type": "image",
+      "bytes": 69,
+      "source_content_type": "image/png",
+      "destination_content_type": "image/png"
+    },
+    {
+      "lane": "text",
+      "key": "incoming/0000-note.txt",
+      "source_sha256": "d6ebecd6155ae4be5afa51eb4be1413a483315c62edadbf4c7af71a45adf279f",
+      "destination_sha256": "d6ebecd6155ae4be5afa51eb4be1413a483315c62edadbf4c7af71a45adf279f",
+      "media_type": "text",
+      "bytes": 48,
+      "source_content_type": "text/plain",
+      "destination_content_type": "text/plain"
+    },
+    {
+      "lane": "text",
+      "key": "incoming/0001-note.txt",
+      "source_sha256": "d5474d49fcc9621059f433ece56084df51ad69640cd09241a82f88e7f979e03a",
+      "destination_sha256": "d5474d49fcc9621059f433ece56084df51ad69640cd09241a82f88e7f979e03a",
+      "media_type": "text",
+      "bytes": 48,
+      "source_content_type": "text/plain",
+      "destination_content_type": "text/plain"
+    },
+    {
+      "lane": "text",
+      "key": "incoming/0002-note.txt",
+      "source_sha256": "408bda0508574d6b211f36e4988eb66280ac85139d739bace1478b40e1dd5411",
+      "destination_sha256": "408bda0508574d6b211f36e4988eb66280ac85139d739bace1478b40e1dd5411",
+      "media_type": "text",
+      "bytes": 48,
+      "source_content_type": "text/plain",
+      "destination_content_type": "text/plain"
+    },
+    {
+      "lane": "text",
+      "key": "incoming/0003-note.txt",
+      "source_sha256": "fb3be2e6755fa38598a97590aef97cf3f6862a568cea40e95a190a6988c1d9c3",
+      "destination_sha256": "fb3be2e6755fa38598a97590aef97cf3f6862a568cea40e95a190a6988c1d9c3",
+      "media_type": "text",
+      "bytes": 48,
+      "source_content_type": "text/plain",
+      "destination_content_type": "text/plain"
+    },
+    {
+      "lane": "text",
+      "key": "incoming/0004-note.txt",
+      "source_sha256": "5b559a501034b5044fd4aa9cc0e6e8a597c86e0f5f575144e507eadd006fdc7b",
+      "destination_sha256": "5b559a501034b5044fd4aa9cc0e6e8a597c86e0f5f575144e507eadd006fdc7b",
+      "media_type": "text",
+      "bytes": 48,
+      "source_content_type": "text/plain",
+      "destination_content_type": "text/plain"
+    },
+    {
+      "lane": "text",
+      "key": "incoming/0005-note.txt",
+      "source_sha256": "16397e9ba0aeabab17f34c293245b730d02b1a74b08679ed95ab01f47c6109c1",
+      "destination_sha256": "16397e9ba0aeabab17f34c293245b730d02b1a74b08679ed95ab01f47c6109c1",
+      "media_type": "text",
+      "bytes": 48,
+      "source_content_type": "text/plain",
+      "destination_content_type": "text/plain"
+    },
+    {
+      "lane": "text",
+      "key": "incoming/0006-note.txt",
+      "source_sha256": "be158a13b3ead834170688a2dadd113029bba60482eabc5758931b9f2296a393",
+      "destination_sha256": "be158a13b3ead834170688a2dadd113029bba60482eabc5758931b9f2296a393",
+      "media_type": "text",
+      "bytes": 48,
+      "source_content_type": "text/plain",
+      "destination_content_type": "text/plain"
+    },
+    {
+      "lane": "text",
+      "key": "incoming/0007-note.txt",
+      "source_sha256": "ea22c6ff1f870ca267f790fb358ad8dd04b78187d29ae8d027c00315334452dc",
+      "destination_sha256": "ea22c6ff1f870ca267f790fb358ad8dd04b78187d29ae8d027c00315334452dc",
+      "media_type": "text",
+      "bytes": 48,
+      "source_content_type": "text/plain",
+      "destination_content_type": "text/plain"
+    },
+    {
+      "lane": "text",
+      "key": "incoming/0008-note.txt",
+      "source_sha256": "92b70f2f0ceb428b1b12adcd6d52688ae055152246b810165e5a1f0b30999017",
+      "destination_sha256": "92b70f2f0ceb428b1b12adcd6d52688ae055152246b810165e5a1f0b30999017",
+      "media_type": "text",
+      "bytes": 48,
+      "source_content_type": "text/plain",
+      "destination_content_type": "text/plain"
+    },
+    {
+      "lane": "text",
+      "key": "incoming/0009-note.txt",
+      "source_sha256": "23081d4706ff43bf163bab4bbf5c503cbe898ab227fa7d00a806e321ea60beb2",
+      "destination_sha256": "23081d4706ff43bf163bab4bbf5c503cbe898ab227fa7d00a806e321ea60beb2",
+      "media_type": "text",
+      "bytes": 48,
+      "source_content_type": "text/plain",
+      "destination_content_type": "text/plain"
+    },
+    {
+      "lane": "text",
+      "key": "incoming/0010-note.txt",
+      "source_sha256": "4e0a591de7490309bcd24923eb142a578367038970c7723a011a2c5879406852",
+      "destination_sha256": "4e0a591de7490309bcd24923eb142a578367038970c7723a011a2c5879406852",
+      "media_type": "text",
+      "bytes": 49,
+      "source_content_type": "text/plain",
+      "destination_content_type": "text/plain"
+    },
+    {
+      "lane": "text",
+      "key": "incoming/0011-note.txt",
+      "source_sha256": "af285d6043701862c6b22cb5b0d72f24820a52d8ee3708fbde7e44b48659f24f",
+      "destination_sha256": "af285d6043701862c6b22cb5b0d72f24820a52d8ee3708fbde7e44b48659f24f",
+      "media_type": "text",
+      "bytes": 49,
+      "source_content_type": "text/plain",
+      "destination_content_type": "text/plain"
+    },
+    {
+      "lane": "text",
+      "key": "incoming/0012-note.txt",
+      "source_sha256": "e433bd46bd23686302bc4af75cd6c420b69ec36b8feb2c42f2cb439e0a8a8f6e",
+      "destination_sha256": "e433bd46bd23686302bc4af75cd6c420b69ec36b8feb2c42f2cb439e0a8a8f6e",
+      "media_type": "text",
+      "bytes": 49,
+      "source_content_type": "text/plain",
+      "destination_content_type": "text/plain"
+    },
+    {
+      "lane": "text",
+      "key": "incoming/0013-note.txt",
+      "source_sha256": "d7e1b0e4b190bfa9995fed108a5b3e38ef4b41ddd9046e6fab02ba68fa8b9847",
+      "destination_sha256": "d7e1b0e4b190bfa9995fed108a5b3e38ef4b41ddd9046e6fab02ba68fa8b9847",
+      "media_type": "text",
+      "bytes": 49,
+      "source_content_type": "text/plain",
+      "destination_content_type": "text/plain"
+    },
+    {
+      "lane": "video",
+      "key": "incoming/0000-clip.mp4",
+      "source_sha256": "dc1c1693241e39bdd740ce03ae32d81553f675ae81452ff62769393590cfb06d",
+      "destination_sha256": "dc1c1693241e39bdd740ce03ae32d81553f675ae81452ff62769393590cfb06d",
+      "media_type": "video",
+      "bytes": 1013,
+      "source_content_type": "video/mp4",
+      "destination_content_type": "video/mp4"
+    },
+    {
+      "lane": "video",
+      "key": "incoming/0001-clip.mp4",
+      "source_sha256": "dc1c1693241e39bdd740ce03ae32d81553f675ae81452ff62769393590cfb06d",
+      "destination_sha256": "dc1c1693241e39bdd740ce03ae32d81553f675ae81452ff62769393590cfb06d",
+      "media_type": "video",
+      "bytes": 1013,
+      "source_content_type": "video/mp4",
+      "destination_content_type": "video/mp4"
+    },
+    {
+      "lane": "video",
+      "key": "incoming/0002-clip.mp4",
+      "source_sha256": "dc1c1693241e39bdd740ce03ae32d81553f675ae81452ff62769393590cfb06d",
+      "destination_sha256": "dc1c1693241e39bdd740ce03ae32d81553f675ae81452ff62769393590cfb06d",
+      "media_type": "video",
+      "bytes": 1013,
+      "source_content_type": "video/mp4",
+      "destination_content_type": "video/mp4"
+    },
+    {
+      "lane": "video",
+      "key": "incoming/0003-clip.mp4",
+      "source_sha256": "dc1c1693241e39bdd740ce03ae32d81553f675ae81452ff62769393590cfb06d",
+      "destination_sha256": "dc1c1693241e39bdd740ce03ae32d81553f675ae81452ff62769393590cfb06d",
+      "media_type": "video",
+      "bytes": 1013,
+      "source_content_type": "video/mp4",
+      "destination_content_type": "video/mp4"
+    },
+    {
+      "lane": "video",
+      "key": "incoming/0004-clip.mp4",
+      "source_sha256": "dc1c1693241e39bdd740ce03ae32d81553f675ae81452ff62769393590cfb06d",
+      "destination_sha256": "dc1c1693241e39bdd740ce03ae32d81553f675ae81452ff62769393590cfb06d",
+      "media_type": "video",
+      "bytes": 1013,
+      "source_content_type": "video/mp4",
+      "destination_content_type": "video/mp4"
+    },
+    {
+      "lane": "video",
+      "key": "incoming/0005-clip.mp4",
+      "source_sha256": "dc1c1693241e39bdd740ce03ae32d81553f675ae81452ff62769393590cfb06d",
+      "destination_sha256": "dc1c1693241e39bdd740ce03ae32d81553f675ae81452ff62769393590cfb06d",
+      "media_type": "video",
+      "bytes": 1013,
+      "source_content_type": "video/mp4",
+      "destination_content_type": "video/mp4"
+    },
+    {
+      "lane": "video",
+      "key": "incoming/0006-clip.mp4",
+      "source_sha256": "dc1c1693241e39bdd740ce03ae32d81553f675ae81452ff62769393590cfb06d",
+      "destination_sha256": "dc1c1693241e39bdd740ce03ae32d81553f675ae81452ff62769393590cfb06d",
+      "media_type": "video",
+      "bytes": 1013,
+      "source_content_type": "video/mp4",
+      "destination_content_type": "video/mp4"
+    },
+    {
+      "lane": "video",
+      "key": "incoming/0007-clip.mp4",
+      "source_sha256": "dc1c1693241e39bdd740ce03ae32d81553f675ae81452ff62769393590cfb06d",
+      "destination_sha256": "dc1c1693241e39bdd740ce03ae32d81553f675ae81452ff62769393590cfb06d",
+      "media_type": "video",
+      "bytes": 1013,
+      "source_content_type": "video/mp4",
+      "destination_content_type": "video/mp4"
+    },
+    {
+      "lane": "video",
+      "key": "incoming/0008-clip.mp4",
+      "source_sha256": "dc1c1693241e39bdd740ce03ae32d81553f675ae81452ff62769393590cfb06d",
+      "destination_sha256": "dc1c1693241e39bdd740ce03ae32d81553f675ae81452ff62769393590cfb06d",
+      "media_type": "video",
+      "bytes": 1013,
+      "source_content_type": "video/mp4",
+      "destination_content_type": "video/mp4"
+    },
+    {
+      "lane": "video",
+      "key": "incoming/0009-clip.mp4",
+      "source_sha256": "dc1c1693241e39bdd740ce03ae32d81553f675ae81452ff62769393590cfb06d",
+      "destination_sha256": "dc1c1693241e39bdd740ce03ae32d81553f675ae81452ff62769393590cfb06d",
+      "media_type": "video",
+      "bytes": 1013,
+      "source_content_type": "video/mp4",
+      "destination_content_type": "video/mp4"
+    },
+    {
+      "lane": "video",
+      "key": "incoming/0010-clip.mp4",
+      "source_sha256": "dc1c1693241e39bdd740ce03ae32d81553f675ae81452ff62769393590cfb06d",
+      "destination_sha256": "dc1c1693241e39bdd740ce03ae32d81553f675ae81452ff62769393590cfb06d",
+      "media_type": "video",
+      "bytes": 1013,
+      "source_content_type": "video/mp4",
+      "destination_content_type": "video/mp4"
+    },
+    {
+      "lane": "video",
+      "key": "incoming/0011-clip.mp4",
+      "source_sha256": "dc1c1693241e39bdd740ce03ae32d81553f675ae81452ff62769393590cfb06d",
+      "destination_sha256": "dc1c1693241e39bdd740ce03ae32d81553f675ae81452ff62769393590cfb06d",
+      "media_type": "video",
+      "bytes": 1013,
+      "source_content_type": "video/mp4",
+      "destination_content_type": "video/mp4"
+    },
+    {
+      "lane": "video",
+      "key": "incoming/0012-clip.mp4",
+      "source_sha256": "dc1c1693241e39bdd740ce03ae32d81553f675ae81452ff62769393590cfb06d",
+      "destination_sha256": "dc1c1693241e39bdd740ce03ae32d81553f675ae81452ff62769393590cfb06d",
+      "media_type": "video",
+      "bytes": 1013,
+      "source_content_type": "video/mp4",
+      "destination_content_type": "video/mp4"
+    },
+    {
+      "lane": "video",
+      "key": "incoming/0013-clip.mp4",
+      "source_sha256": "dc1c1693241e39bdd740ce03ae32d81553f675ae81452ff62769393590cfb06d",
+      "destination_sha256": "dc1c1693241e39bdd740ce03ae32d81553f675ae81452ff62769393590cfb06d",
+      "media_type": "video",
+      "bytes": 1013,
+      "source_content_type": "video/mp4",
+      "destination_content_type": "video/mp4"
+    }
+  ],
+  "target_runtime": "Airflow TaskFlow lane tasks invoking generated bounded S3 worker",
+  "zero_downtime_claim": false,
+  "nifi_state_transferred": false,
+  "delivery": "at_least_once",
+  "limitations": [
+    "Airflow dag.test executes real DagRun and task lifecycle locally; production scheduler and executor deployment were not exercised.",
+    "One task per mapped S3 lane invokes the packaged Flowbridge worker, not individual translated NiFi operators.",
+    "Scheduled microbatches replace continuous NiFi scheduling; no queue/state migration or zero-downtime claim.",
+    "Isolated synthetic S3Mock endpoints; production TLS/IAM and scale are not certified."
+  ]
+}

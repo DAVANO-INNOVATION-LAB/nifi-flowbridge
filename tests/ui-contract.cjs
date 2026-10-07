@@ -4,7 +4,9 @@ const html=fs.readFileSync('web/index.html','utf8');
 function element(){return {value:'',textContent:'',checked:false,disabled:false,hidden:false,children:[],listeners:{},classList:{toggle(){},add(){},remove(){}},setAttribute(){},addEventListener(k,v){this.listeners[k]=v},append(...v){this.children.push(...v)},replaceChildren(){this.children=[]},querySelectorAll(){return []},focus(){}};}
 const nodes=Object.fromEntries([...html.matchAll(/id="([^"]+)"/g)].map(m=>[m[1],element()]));
 let mode='success';
-const sandbox={console,TextEncoder,AbortController,setTimeout,clearTimeout,window:{addEventListener(){}},document:{getElementById(id){assert.ok(nodes[id],`Missing DOM ID ${id}`);return nodes[id]},createElement:element},fetch:async path=>{
+let nativeCalls=0;
+const sandbox={console,URL,TextEncoder,AbortController,setTimeout,clearTimeout,window:{addEventListener(){}},document:{getElementById(id){assert.ok(nodes[id],`Missing DOM ID ${id}`);return nodes[id]},createElement:element},fetch:async path=>{
+ if(path==='/api/live/native/fence'){nativeCalls++;return {ok:true,json:async()=>({proof_id:'server-proof',source_stopped_and_drained:true,cutover_ready:false})};}
  if(path==='/api/live/status')return {ok:false,status:401,json:async()=>({})};
  if(path==='/api/demo/continuous/evidence')return {ok:true,json:async()=>({result:'passed'})};
  if(path==='/api/example/fleet')return {ok:true,json:async()=>({flowContents:{name:'60 synthetic pipelines'}})};
@@ -30,5 +32,12 @@ vm.createContext(sandbox);vm.runInContext(fs.readFileSync('web/app.js','utf8'),s
  nodes.document.listeners.input();assert.equal(nodes['fleet-results'].hidden,true);assert.match(nodes['fleet-status'].textContent,/stale/);
  mode='offline';await nodes['fleet-assess'].listeners.click();assert.equal(nodes['fleet-assess'].disabled,false);assert.equal(nodes['fleet-results'].hidden,true);assert.ok(nodes.document.value);
  vm.runInContext("renderFleet({report:{ok:true},inventory:[{id:'one',mapped:true}]})",sandbox);assert.match(nodes['fleet-status'].textContent,/No migration has started/);
+ nodes['migration-runtime'].value='airflow';nodes['migration-runtime'].listeners.change();assert.equal(nodes['kafka-migration'].hidden,true);assert.equal(nodes['native-migration'].hidden,false);assert.equal(nodes['native-batch-label'].hidden,false);assert.match(nodes['migration-scope'].textContent,/microbatches/);
+ nodes['migration-runtime'].value='camel-k';nodes['migration-runtime'].listeners.change();assert.equal(nodes['native-batch-label'].hidden,true);assert.match(nodes['migration-scope'].textContent,/persistent/);
+ nodes['migration-runtime'].value='kafka';nodes['migration-runtime'].listeners.change();assert.equal(nodes['kafka-migration'].hidden,false);assert.equal(nodes['native-migration'].hidden,true);
+ vm.runInContext('liveEnabled=true',sandbox);nodes['migration-runtime'].value='airflow';nodes['platform-kind'].value='nifi';nodes['platform-url'].value='https://nifi.example/nifi-api';nodes['platform-group'].value='group';nodes['live-token'].value='test-owner-token';nodes['native-batch'].checked=true;
+ await vm.runInContext("nativeOperation('fence')",sandbox);assert.equal(nativeCalls,0);assert.match(nodes['native-status'].textContent,/authorize/);
+ nodes['native-fence-ack'].checked=true;nodes['platform-bearer'].value='test-ephemeral-token';await vm.runInContext("nativeOperation('fence')",sandbox);assert.equal(nativeCalls,1);assert.equal(nodes['native-revalidate'].disabled,false);assert.equal(nodes['native-fence-ack'].checked,false);assert.equal(nodes['platform-bearer'].value,'');assert.match(nodes['native-status'].textContent,/NiFi stopped and drained/);
+ nodes['platform-group'].listeners.input();assert.equal(nodes['native-revalidate'].disabled,true);assert.equal(nodes['native-result'].hidden,true);
  console.log('UI contract passed: fleet example, mixed coverage, blocked cutover, stale assessment, text-only rendering, busy recovery; native example, busy controls, review gate, stale export invalidation, blockers, offline recovery, handover guide.');
 })().catch(e=>{console.error(e);process.exitCode=1});

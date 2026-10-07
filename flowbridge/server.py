@@ -169,7 +169,7 @@ class Handler(BaseHTTPRequestHandler):
             source = payload.get("source", "auto")
             target = payload.get("target", "flowbridge")
             formats = ("nifi", "seatunnel", "camel-k", "kafka", "flowbridge")
-            if not isinstance(source, str) or source not in ("auto",) + formats or not isinstance(target, str) or target not in formats + ("airflow", "nifi-upgrade", "continuous-worker", "s3-fleet"):
+            if not isinstance(source, str) or source not in ("auto",) + formats or not isinstance(target, str) or target not in formats + ("airflow", "nifi-upgrade", "continuous-worker", "s3-fleet", "airflow-s3", "camel-k-s3"):
                 raise ValueError("Unknown format")
             from .service import analyze, assess, convert
             if self.path == "/api/fleet/assess":

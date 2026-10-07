@@ -40,6 +40,19 @@ def assess(data, source="auto", nifi_version="auto"):
 
 
 def convert(data, source="auto", target="flowbridge", batch_contract=None, nifi_version="auto"):
+    declared = nifi_version if nifi_version != "auto" else data.get("nifiVersion")
+    if declared is not None and (not isinstance(declared, str) or declared.split(".", 1)[0] not in ("1", "2")):
+        return {"report": {"ok": False, "errors": [{"code":"unsupported_version", "message":"NiFi version compatibility is verified structurally for 1.x and 2.x only. Future versions cannot be exported."}], "warnings": []}, "files": {}}
+    if isinstance(data.get("_flowbridge_xml"), dict) and data["_flowbridge_xml"].get("export_blocked") and target != "nifi-upgrade":
+        return {"report": {"ok": False, "errors": [{"code":"xml_review_required", "message":"Legacy XML is available for assessment only. Export a reviewed JSON definition from NiFi before executable conversion."}], "warnings": []}, "files": {}}
+    if target in ("airflow-s3", "camel-k-s3"):
+        if source not in ("auto", "nifi") or nifi_version not in ("auto", "2", "2.12.0"):
+            return {"report":{"ok":False,"errors":[{"code":"unsupported_version","message":"Native S3 target mappings require compatible NiFi 2.12 flows."}],"warnings":[]},"files":{}}
+        if target == "airflow-s3":
+            from .targets.airflow import export_airflow_fleet
+            return export_airflow_fleet(data, contract=batch_contract)
+        from .targets.camel_k import export_camel_k
+        return export_camel_k(data)
     if target == "s3-fleet":
         if source not in ("auto", "nifi") or nifi_version not in ("auto", "2", "2.12.0"):
             return {"report":{"ok":False,"errors":[{"code":"unsupported_version","message":"Fleet execution requires verified NiFi 2.12 mappings."}],"warnings":[]},"files":{}}
@@ -51,6 +64,20 @@ def convert(data, source="auto", target="flowbridge", batch_contract=None, nifi_
             return {"report":{"ok":False,"errors":[{"code":"unsupported_version","message":"Continuous native S3 migration requires an explicitly compatible NiFi 2 flow."}],"warnings":[]},"files":{}}
         from .nifi_s3 import export_nifi_s3
         return export_nifi_s3(data)
+    if target == "seatunnel" and isinstance(data.get("flowContents"), dict) and isinstance(data["flowContents"].get("processors"), list) and any(p.get("type") == "org.apache.nifi.kafka.processors.ConsumeKafka" for p in data.get("flowContents", {}).get("processors", []) if isinstance(p, dict)):
+        try:
+            if source not in ("nifi", "auto") or nifi_version not in ("auto", "2", "2.12.0"):
+                raise core.Invalid("unsupported_version", "Modern native Kafka mapping requires NiFi 2.12.")
+            from .targets.seatunnel import flow_from_nifi
+            flow = flow_from_nifi(data)
+            result = core.convert(flow, "flowbridge", "seatunnel")
+            result["report"]["source"] = "nifi"
+            result["report"]["warnings"].append({"code":"live_boundary_required", "message":"Native SeaTunnel handover is verified only for one partition with non-null values, null keys and no headers. This draft has no live boundary: read committed offsets after NiFi stop/drain before using the native job exporter. Timestamps are not equivalent."})
+            result["files"]["migration-report.json"] = json.dumps(result["report"], indent=2) + "\n"
+            result["files"]["README.md"] = "Review-only SeaTunnel draft. Use flowbridge.targets.seatunnel.export_from_nifi with verified live offsets after source stop/drain for a handover job. This package does not deploy or cut over.\n"
+            return result
+        except core.Invalid as error:
+            return {"report":{"ok":False,"errors":[{"code":error.code,"message":error.message}],"warnings":[]},"files":{}}
     media = _media_document(data)
     if media is not None:
         if target == "nifi":
@@ -62,11 +89,6 @@ def convert(data, source="auto", target="flowbridge", batch_contract=None, nifi_
             return result
         from .media_targets import export_media
         return export_media(media, target)
-    declared = nifi_version if nifi_version != "auto" else data.get("nifiVersion")
-    if declared is not None and (not isinstance(declared, str) or declared.split(".", 1)[0] not in ("1", "2")):
-        return {"report": {"ok": False, "errors": [{"code":"unsupported_version", "message":"NiFi version compatibility is verified structurally for 1.x and 2.x only. Future versions cannot be exported."}], "warnings": []}, "files": {}}
-    if isinstance(data.get("_flowbridge_xml"), dict) and data["_flowbridge_xml"].get("export_blocked") and target != "nifi-upgrade":
-        return {"report": {"ok": False, "errors": [{"code":"xml_review_required", "message":"Legacy XML is available for assessment only. Export a reviewed JSON definition from NiFi before executable conversion."}], "warnings": []}, "files": {}}
     if target in ("airflow", "nifi-upgrade"):
         assessment = assess(data, source, nifi_version)
         if "assessment" not in assessment:

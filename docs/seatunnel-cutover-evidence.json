@@ -1,0 +1,105 @@
+{
+  "result": "passed",
+  "recorded_at": "2026-10-07T12:24:16.497361+00:00",
+  "source_runtime": "Apache NiFi 2.12.0",
+  "target_runtime": "Apache SeaTunnel 2.3.13 Zeta",
+  "target_image_digest": "sha256:2b1d327df210fb35c2ec12487b0db52c95dc845a77864d3ee04f1886cdcd60e1",
+  "broker_runtime": "Apache Kafka 4.2.0",
+  "native_nifi_executed": true,
+  "native_seatunnel_executed": true,
+  "source_native_processors": [
+    "ConsumeKafka",
+    "PublishKafka"
+  ],
+  "source_connection_service": "Kafka3ConnectionService",
+  "source_transactions_enabled": false,
+  "handoff": {
+    "source": "Apache NiFi 2.12.0",
+    "group": "nifi-proof-blue",
+    "source_topic": "source_topic",
+    "target_topic": "target_topic",
+    "source_committed_offsets": {
+      "0": 6
+    },
+    "native_output": [
+      "record-0000",
+      "record-0001",
+      "record-0002",
+      "record-0003",
+      "record-0004",
+      "record-0005"
+    ],
+    "native_count": 6,
+    "queued_flowfiles": 0,
+    "active_threads": 0,
+    "source_processors_stopped": true,
+    "handoff_timestamp": 1791375593.0596366,
+    "flow": {
+      "name": "native-kafka-cutover",
+      "source": {
+        "type": "kafka",
+        "brokers": "kafka:9092",
+        "topic": "source_topic",
+        "group": "nifi-proof-blue",
+        "offset": "earliest"
+      },
+      "sink": {
+        "type": "kafka",
+        "brokers": "kafka:9092",
+        "topic": "target_topic"
+      }
+    }
+  },
+  "native_nifi_records": 6,
+  "native_seatunnel_records": 418,
+  "produced": 424,
+  "destination_records": 424,
+  "missing": 0,
+  "duplicates": 0,
+  "ordered_values_equal": true,
+  "source_sha256": "52253d932aed64d303dc0111ec4a8e717f46ec7b5de99d7a59e2da3405eaae0e",
+  "destination_sha256": "52253d932aed64d303dc0111ec4a8e717f46ec7b5de99d7a59e2da3405eaae0e",
+  "source_keys_null_and_headers_empty_verified": true,
+  "live_arrivals_boundary": {
+    "source_count": 362,
+    "target_count": 363,
+    "boundary_all_present": true,
+    "duplicates": 0,
+    "source_sha256": "7bde9bedb4f92048d85b5e37e57206c8a492cc9a8ab23a17ea9741b8a12ffd0e",
+    "target_sha256": "4d2d39913576b26f3028e44b9034d7edd899572f59c1f5fd86b7821abb7aecdb"
+  },
+  "native_rest_status": {
+    "before": {
+      "platform": "seatunnel",
+      "job_id": "1160189998746566657",
+      "status": "RUNNING",
+      "terminal": false
+    },
+    "stop": {
+      "platform": "seatunnel",
+      "job_id": "1160189998746566657",
+      "stop_requested": true,
+      "stopped_verified": false
+    },
+    "after": {
+      "platform": "seatunnel",
+      "job_id": "1160189998746566657",
+      "status": "CANCELED",
+      "terminal": true
+    }
+  },
+  "target_resources_cleaned_up": true,
+  "shared_source_cleanup_owner": "flow_ui",
+  "limits": [
+    "Single partition, non-null message values; no keys or headers in this tested contract.",
+    "No timestamp equivalence claim.",
+    "At-least-once delivery; no exactly-once, crash recovery, or zero downtime claim.",
+    "No arbitrary NiFi transformations; plaintext Kafka only in this isolated synthetic test.",
+    "Native source fence performed by integration harness, not automated by SeaTunnel emitter."
+  ],
+  "sources": [
+    "https://seatunnel.apache.org/docs/2.3.13/connectors/source/Kafka/",
+    "https://seatunnel.apache.org/docs/2.3.13/connectors/sink/Kafka/",
+    "https://seatunnel.apache.org/docs/2.3.13/engines/zeta/rest-api-v2/"
+  ]
+}
